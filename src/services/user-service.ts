@@ -103,6 +103,14 @@ export class UserService {
     await this.userRepository.update(user!);
   }
 
+  async isResetTokenValid(email: string, code: string): Promise<boolean> {
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) return false;
+    const isTokenValid =
+      user && user.resetToken === code && user.resetExpires! > new Date();
+    return isTokenValid;
+  }
+
   async getAllUsers(): Promise<User[]> {
     return this.userRepository.getAll();
   }

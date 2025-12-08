@@ -15,6 +15,7 @@ router.post("/auth/login", userController.loginUser);
 router.post("/auth/google", userController.googleLogin);
 router.post("/auth/forgot-password", userController.forgotPassword);
 router.post("/auth/reset-password", userController.resetPassword);
+router.post("/auth/validate-reset-token", userController.verifyResetToken);
 
 router.get("/users", authenticate, userController.listUsers);
 router.get("/users/:id", authenticate, userController.getUserById);

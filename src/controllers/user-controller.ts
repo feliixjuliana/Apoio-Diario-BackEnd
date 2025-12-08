@@ -59,9 +59,25 @@ export const createUserControllerHandlers = (service: UserService) => {
 
   const resetPassword = async (req: Request, res: Response) => {
     try {
-      const { email, code, newPassword } = req.body;
-      await service.resetPassword(email, code, newPassword);
+      const { email, code, password } = req.body;
+      await service.resetPassword(email, code, password);
       res.status(200).json({ message: "Password updated" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  };
+
+  const verifyResetToken = async (req: Request, res: Response) => {
+    try {
+      const { email, code } = req.body;
+      const ok = await service.isResetTokenValid(email, code);
+
+      if (!ok) {
+        return res
+          .status(400)
+          .json({ message: "Código inválido ou expirado!" });
+      }
+      return res.status(200).json({ message: "Código válido" });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
@@ -85,6 +101,7 @@ export const createUserControllerHandlers = (service: UserService) => {
     googleLogin,
     forgotPassword,
     resetPassword,
+    verifyResetToken,
     listUsers,
     getUserById,
   };
