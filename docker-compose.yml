@@ -9,9 +9,9 @@ services:
       POSTGRES_PASSWORD: adminsJujuDandanRoro
       POSTGRES_DB: app_db
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./src/database/init.sql:/docker-entrypoint-initdb.d/init.sql
 volumes:
   postgres_data:
