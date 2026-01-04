@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Body, Param, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '../auth/auth.guard';
 
@@ -32,7 +41,15 @@ export class UsersController {
   @Post('auth/reset-password')
   @HttpCode(HttpStatus.OK)
   resetPassword(@Body() body: any) {
-    return this.usersService.resetPassword(body.email, body.code, body.password);
+    return this.usersService.resetPassword(body.email, body.password);
+  }
+
+  @Post('auth/validate-reset-token')
+  async validateResetToken(
+    @Body('email') email: string,
+    @Body('code') code: string,
+  ) {
+    return this.usersService.validateResetToken(email, code);
   }
 
   @UseGuards(AuthGuard)
