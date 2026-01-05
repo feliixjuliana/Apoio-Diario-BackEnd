@@ -37,11 +37,35 @@ export class UsersRepository {
     return result.rows[0] ? this.mapToModel(result.rows[0]) : null;
   }
 
-  async findById(id: string): Promise<User | null> {
-    const result = await this.pool.query('SELECT * FROM users WHERE id = $1', [
-      id,
-    ]);
-    return result.rows[0] ? this.mapToModel(result.rows[0]) : null;
+  async findById(id: string): Promise<UserWithChildren | null> {
+    const query = `
+      SELECT
+        u.id,
+        u.email,
+        u.created_at,
+        u.reset_token,
+        u.reset_expires,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', c.id,
+              'nome', c.nome,
+              'idade', c.idade,
+              'sons_ativos', c.sons_ativos,
+              'vibracao_ativa', c.vibracao_ativa,
+              'animacoes_ativas', c.animacoes_ativas,
+              'created_at', c.created_at
+            )
+          ) FILTER (WHERE c.id IS NOT NULL),
+          '[]'
+        ) AS children
+      FROM users u
+      LEFT JOIN children c ON c.user_id = u.id
+      WHERE u.id = $1
+      GROUP BY u.id;
+    `;
+    const result = await this.pool.query(query, [id]);
+    return result.rows[0] ? this.mapToModelWithChildren(result.rows[0]) : null;
   }
 
   async getAll(): Promise<UserWithChildren[]> {
