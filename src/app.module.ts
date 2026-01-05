@@ -4,6 +4,7 @@ import configuration from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
+import { ChildrenModule } from './children/children.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AppController } from './app.controller';
     }),
     DatabaseModule,
     UsersModule,
+    ChildrenModule,
   ],
   controllers: [AppController],
 })
