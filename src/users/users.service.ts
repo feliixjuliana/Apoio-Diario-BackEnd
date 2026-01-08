@@ -29,7 +29,7 @@ export class UsersService {
 
   async registerUser(data: any): Promise<User> {
     const existingUser = await this.userRepository.findByEmail(data.email);
-    if (existingUser) throw new ConflictException('Email already exists');
+    if (existingUser) throw new ConflictException('Email já está em uso.');
     const passwordHash = await bcrypt.hash(data.password, 10);
     const newUser = new User({ email: data.email, password: passwordHash });
     return this.userRepository.save(newUser);
@@ -39,7 +39,7 @@ export class UsersService {
     const user = await this.userRepository.findByEmail(email);
     const isValid =
       user && user.password && (await bcrypt.compare(pass, user.password));
-    if (!isValid) throw new UnauthorizedException('Invalid credentials');
+    if (!isValid) throw new UnauthorizedException('Email ou senha inválidos.');
     return this.generateToken(user);
   }
 
@@ -50,7 +50,7 @@ export class UsersService {
     });
     const payload = ticket.getPayload();
     if (!payload || !payload.email)
-      throw new UnauthorizedException('Invalid Google Token');
+      throw new UnauthorizedException('Token do Google inválido.');
 
     let user = await this.userRepository.findByEmail(payload.email);
     if (!user) {
@@ -62,7 +62,7 @@ export class UsersService {
 
   async sendForgotPasswordEmail(email: string) {
     const user = await this.userRepository.findByEmail(email);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException('Usuário não encontrado');
     const resetToken = crypto.randomInt(100000, 999999).toString();
     user.resetToken = resetToken;
     user.resetExpires = new Date(Date.now() + 900000);
@@ -116,7 +116,7 @@ export class UsersService {
 
   async getUserById(id: string) {
     const user = await this.userRepository.findById(id);
-    if (!user) throw new NotFoundException('Not found');
+    if (!user) throw new NotFoundException('Usuário não encontrado.');
     return user;
   }
 
