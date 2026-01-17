@@ -3,6 +3,7 @@ import { Child } from 'src/children/entities/child.entity';
 export interface UserWithChildren {
   id: string;
   email: string;
+  pinParental: number;
   createdAt: Date;
   resetToken?: string | null;
   resetExpires?: Date | null;

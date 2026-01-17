@@ -1,57 +1,73 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
 import { Child } from './entities/child.entity';
 
 @Injectable()
 export class ChildrenRepository {
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(child: Child): Promise<Child> {
-    const query = `
-      INSERT INTO children (id, user_id, nome, idade, sons_ativos, vibracao_ativa, animacoes_ativas, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *`;
-    const values = [child.id, child.userId, child.nome, child.idade, child.sonsAtivos, child.vibracaoAtiva, child.animacoesAtivas, child.createdAt];
-    await this.pool.query(query, values);
-    return child;
+    const newChild = await this.prisma.children.create({
+      data: {
+        id: child.id,
+        usuarioId: child.userId,
+        nome: child.nome,
+        idade: child.idade,
+        sonsAtivos: child.sonsAtivos,
+        vibracaoAtiva: child.vibracaoAtiva,
+        animacoesAtivas: child.animacoesAtivas,
+        criadoEm: child.createdAt,
+      },
+    });
+    return this.mapToEntity(newChild);
   }
 
   async findByUserId(userId: string): Promise<Child[]> {
-    const res = await this.pool.query('SELECT * FROM children WHERE user_id = $1', [userId]);
-    return res.rows.map(row => this.mapToEntity(row));
+    const childrenList = await this.prisma.children.findMany({
+      where: { usuarioId: userId },
+      orderBy: { criadoEm: 'asc' },
+    });
+    return childrenList.map((row) => this.mapToEntity(row));
   }
 
   async findById(id: string): Promise<Child | null> {
-    const res = await this.pool.query('SELECT * FROM children WHERE id = $1', [id]);
-    return res.rows[0] ? this.mapToEntity(res.rows[0]) : null;
+    const child = await this.prisma.children.findUnique({
+      where: { id },
+    });
+    return child ? this.mapToEntity(child) : null;
   }
 
-  async update(id: string, data: Partial<Child>): Promise<void> {
-    const query = `
-      UPDATE children 
-      SET nome = COALESCE($1, nome), 
-          idade = COALESCE($2, idade), 
-          sons_ativos = COALESCE($3, sons_ativos), 
-          vibracao_ativa = COALESCE($4, vibracao_ativa), 
-          animacoes_ativas = COALESCE($5, animacoes_ativas)
-      WHERE id = $6`;
-    await this.pool.query(query, [data.nome, data.idade, data.sonsAtivos, data.vibracaoAtiva, data.animacoesAtivas, id]);
+  async update(id: string, data: Partial<Child>): Promise<Child> {
+    const updated = await this.prisma.children.update({
+      where: { id },
+      data: {
+        nome: data.nome,
+        idade: data.idade,
+        sonsAtivos: data.sonsAtivos,
+        vibracaoAtiva: data.vibracaoAtiva,
+        animacoesAtivas: data.animacoesAtivas,
+      },
+    });
+    
+    return this.mapToEntity(updated);
   }
 
   async delete(id: string): Promise<void> {
-    await this.pool.query('DELETE FROM children WHERE id = $1', [id]);
+    await this.prisma.children.delete({
+      where: { id },
+    });
   }
 
   private mapToEntity(row: any): Child {
     return new Child({
       id: row.id,
-      userId: row.user_id,
+      userId: row.usuarioId,
       nome: row.nome,
       idade: row.idade,
-      sonsAtivos: row.sons_ativos,
-      vibracaoAtiva: row.vibracao_ativa,
+      sonsAtivos: row.sonsAtivos,
+      vibracaoAtiva: row.vibracaoAtiva,
       animacoesAtivas: row.animacoes_ativas,
-      createdAt: row.created_at,
+      createdAt: row.criadoEm,
     });
   }
 }

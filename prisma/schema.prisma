@@ -1,0 +1,37 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model users {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  senha               String?
+  pinParental         Number
+  criadoEm            DateTime  @default(now()) @map("criado_em")
+  tokenRecuperacao    String?   @map("token_recuperacao")
+  expiracaoRecuperacao DateTime? @map("expiracao_recuperacao")
+  
+  criancas            Crianca[] // Relação 1:N
+
+  @@map("usuarios")
+}
+
+model children {
+  id              String   @id @default(uuid())
+  usuarioId       String   @map("usuario_id")
+  nome            String
+  idade           Int
+  sonsAtivos      Boolean  @default(true) @map("sons_ativos")
+  vibracaoAtiva   Boolean  @default(true) @map("vibracao_ativa")
+  animacoesAtivas Boolean  @default(true) @map("animacoes_ativas")
+  criadoEm        DateTime @default(now()) @map("criado_em")
+
+  usuario         Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("criancas")
+}

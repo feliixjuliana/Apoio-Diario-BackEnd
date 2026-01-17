@@ -1,112 +1,84 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
 import { User } from './entities/user.entity';
-import { UserWithChildren } from './entities/user-response.dto';
+import { UserWithChildren } from './dto/user-response.dto';
 
 @Injectable()
 export class UsersRepository {
-  constructor(@Inject('DATABASE_POOL') private readonly pool: Pool) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async save(user: User): Promise<User> {
-    const query = `INSERT INTO users (id, email, password, created_at) VALUES ($1, $2, $3, $4)`;
-    await this.pool.query(query, [
-      user.id,
-      user.email,
-      user.password,
-      user.createdAt,
-    ]);
-    return user;
+    const newUser = await this.prisma.users.create({
+      data: {
+        id: user.id,
+        email: user.email,
+        senha: user.password,
+        pinParental: user.pinParental,
+        criadoEm: user.createdAt,
+      },
+    });
+    return this.mapToUserEntity(newUser);
   }
 
   async update(user: User): Promise<User> {
-    const query = `UPDATE users SET password = $1, reset_token = $2, reset_expires = $3 WHERE id = $4`;
-    await this.pool.query(query, [
-      user.password,
-      user.resetToken,
-      user.resetExpires,
-      user.id,
-    ]);
-    return user;
+    const updated = await this.prisma.users.update({
+      where: { id: user.id },
+      data: {
+        senha: user.password,
+        pinParental: user.pinParental,
+        tokenRecuperacao: user.resetToken,
+        expiracaoRecuperacao: user.resetExpires,
+      },
+    });
+    return this.mapToUserEntity(updated);
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const result = await this.pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email],
-    );
-    return result.rows[0] ? this.mapToModel(result.rows[0]) : null;
+    const user = await this.prisma.users.findUnique({
+      where: { email },
+    });
+    return user ? this.mapToUserEntity(user) : null;
   }
 
   async findById(id: string): Promise<UserWithChildren | null> {
-    const query = `
-      SELECT
-        u.id,
-        u.email,
-        u.created_at,
-        u.reset_token,
-        u.reset_expires,
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'id', c.id,
-              'nome', c.nome,
-              'idade', c.idade,
-              'sons_ativos', c.sons_ativos,
-              'vibracao_ativa', c.vibracao_ativa,
-              'animacoes_ativas', c.animacoes_ativas,
-              'created_at', c.created_at
-            )
-          ) FILTER (WHERE c.id IS NOT NULL),
-          '[]'
-        ) AS children
-      FROM users u
-      LEFT JOIN children c ON c.user_id = u.id
-      WHERE u.id = $1
-      GROUP BY u.id;
-    `;
-    const result = await this.pool.query(query, [id]);
-    return result.rows[0] ? this.mapToModelWithChildren(result.rows[0]) : null;
+    const user = await this.prisma.users.findUnique({
+      where: { id },
+      include: {
+        criancas: true,
+      },
+    });
+
+    if (!user) return null;
+    return this.mapToModelWithChildren(user);
   }
 
   async getAll(): Promise<UserWithChildren[]> {
-    const query = `
-    SELECT
-      u.id,
-      u.email,
-      u.created_at,
-      u.reset_token,
-      u.reset_expires,
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'id', c.id,
-            'nome', c.nome,
-            'idade', c.idade,
-            'sons_ativos', c.sons_ativos,
-            'vibracao_ativa', c.vibracao_ativa,
-            'animacoes_ativas', c.animacoes_ativas,
-            'created_at', c.created_at
-          )
-        ) FILTER (WHERE c.id IS NOT NULL),
-        '[]'
-      ) AS children
-    FROM users u
-    LEFT JOIN children c ON c.user_id = u.id
-    GROUP BY u.id
-    ORDER BY u.created_at DESC;
-    `;
-    const result = await this.pool.query(query);
-    return result.rows.map(this.mapToModelWithChildren);
+    const users = await this.prisma.users.findMany({
+      include: {
+        criancas: true,
+      },
+      orderBy: {
+        criadoEm: 'desc',
+      },
+    });
+    return users.map((u) => this.mapToModelWithChildren(u));
   }
 
-  private mapToModel(row: any): User {
+  async delete(id: string): Promise<void> {
+    await this.prisma.users.delete({
+      where: { id },
+    });
+  }
+
+  private mapToUserEntity(prismaUser: any): User {
     return new User({
-      id: row.id,
-      email: row.email,
-      password: row.password,
-      createdAt: row.created_at,
-      resetToken: row.reset_token,
-      resetExpires: row.reset_expires,
+      id: prismaUser.id,
+      email: prismaUser.email,
+      password: prismaUser.senha,
+      pinParental: prismaUser.pinParental,
+      createdAt: prismaUser.criadoEm,
+      resetToken: prismaUser.tokenRecuperacao,
+      resetExpires: prismaUser.expiracaoRecuperacao,
     });
   }
 
@@ -114,10 +86,19 @@ export class UsersRepository {
     return {
       id: row.id,
       email: row.email,
-      createdAt: row.created_at,
-      resetToken: row.reset_token,
-      resetExpires: row.reset_expires,
-      children: row.children ?? [],
+      pinParental: row.pinParental,
+      createdAt: row.criadoEm,
+      resetToken: row.tokenRecuperacao,
+      resetExpires: row.expiracaoRecuperacao,
+      children: row.criancas.map((c: any) => ({
+        id: c.id,
+        nome: c.nome,
+        idade: c.idade,
+        sonsAtivos: c.sonsAtivos,
+        vibracaoAtiva: c.vibracaoAtiva,
+        animacoesAtivas: c.animacoesAtivas,
+        createdAt: c.criadoEm,
+      })),
     };
   }
 }
