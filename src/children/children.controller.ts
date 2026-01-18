@@ -28,7 +28,7 @@ export class ChildrenController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.childrenService.remove(id);
+  remove(@Param('id') id: string, @Request() req) {
+    return this.childrenService.remove(id, req.user.id);
   }
 }
