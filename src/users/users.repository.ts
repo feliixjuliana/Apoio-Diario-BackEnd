@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
 import { User } from './entities/user.entity';
 import { UserWithChildren } from './dto/user-response.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersRepository {
@@ -13,7 +13,7 @@ export class UsersRepository {
         id: user.id,
         email: user.email,
         senha: user.password,
-        pinParental: user.pinParental,
+        pinParental: user.pinParental ?? 0,
         criadoEm: user.createdAt,
       },
     });

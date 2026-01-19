@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
 
@@ -14,7 +14,7 @@ export class RoutinesRepository {
         ...data,
         dataTarefa: new Date(dto.dataTarefa),
         subtarefas: {
-          create: subtarefas?.map(sub => ({
+          create: subtarefas?.map((sub) => ({
             nomeTarefa: sub.nomeTarefa,
             imgTarefa: sub.imgTarefa,
             tarefaCompletada: sub.tarefaCompletada ?? false,
@@ -28,9 +28,9 @@ export class RoutinesRepository {
   async findById(id: string) {
     return this.prisma.routine.findUnique({
       where: { id },
-      include: { 
+      include: {
         subtarefas: true,
-        crianca: true 
+        crianca: true,
       },
     });
   }

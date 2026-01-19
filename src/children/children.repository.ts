@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { Child } from './entities/child.entity';
 
 @Injectable()
@@ -48,7 +48,7 @@ export class ChildrenRepository {
         animacoesAtivas: data.animacoesAtivas,
       },
     });
-    
+
     return this.mapToEntity(updated);
   }
 
