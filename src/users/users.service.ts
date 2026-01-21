@@ -1,9 +1,15 @@
-import {Injectable, ConflictException, UnauthorizedException, NotFoundException, BadRequestException,} from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { UsersRepository } from './users.repository';
 import { User } from './entities/user.entity';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto'
+import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
@@ -25,14 +31,18 @@ export class UsersService {
 
   async registerUser(dto: CreateUserDto): Promise<User> {
     const existingUser = await this.userRepository.findByEmail(dto.email);
-    if (existingUser) throw new ConflictException('Email já está em uso.');
+    if (existingUser)
+      throw new ConflictException({
+        message: 'Dados Inválidos.',
+        errors: { email: 'Email já cadastrado.' },
+      });
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    
-    const newUser = new User({ 
-      email: dto.email, 
+
+    const newUser = new User({
+      email: dto.email,
       password: passwordHash,
-      pinParental: dto.pinParental
+      pinParental: dto.pinParental,
     });
 
     return this.userRepository.save(newUser);
@@ -43,7 +53,7 @@ export class UsersService {
     const isValid =
       user && user.password && (await bcrypt.compare(pass, user.password));
     if (!isValid) throw new UnauthorizedException('Email ou senha inválidos.');
-    
+
     return this.generateToken(user);
   }
 
@@ -71,7 +81,7 @@ export class UsersService {
     const resetToken = crypto.randomInt(100000, 999999).toString();
     user.resetToken = resetToken;
     user.resetExpires = new Date(Date.now() + 900000); // 15 minutos
-    
+
     await this.userRepository.update(user);
 
     const transporter = nodemailer.createTransport({
@@ -93,14 +103,14 @@ export class UsersService {
   async resetPassword(email: string, newPass: string) {
     const user = await this.userRepository.findByEmail(email);
     const isValid = user && user.resetExpires && user.resetExpires > new Date();
-    
+
     if (!isValid)
       throw new BadRequestException('Tempo para redefinição expirado.');
 
     user.password = await bcrypt.hash(newPass, 10);
     user.resetToken = undefined;
     user.resetExpires = undefined;
-    
+
     await this.userRepository.update(user);
   }
 
@@ -133,11 +143,11 @@ export class UsersService {
   async validatePin(userId: string, pin: number) {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new NotFoundException('Usuário não encontrado.');
-    
+
     if (user.pinParental !== pin) {
       throw new UnauthorizedException('PIN Parental inválido.');
     }
-    
+
     return { valid: true };
   }
 
