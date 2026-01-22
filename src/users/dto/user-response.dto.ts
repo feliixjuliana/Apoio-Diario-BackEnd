@@ -1,4 +1,4 @@
-import { Child } from 'src/children/entities/child.entity';
+import { children } from '@prisma/client';
 
 export interface UserWithChildren {
   id: string;
@@ -7,5 +7,5 @@ export interface UserWithChildren {
   createdAt: Date;
   resetToken?: string | null;
   resetExpires?: Date | null;
-  children: Child[];
+  children: children[];
 }

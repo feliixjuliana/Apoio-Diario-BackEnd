@@ -26,7 +26,10 @@ export class RoutinesService {
   async findOne(id: string, userId: string) {
     const routine = await this.repository.findById(id);
     if (!routine) throw new NotFoundException('Tarefa não encontrada.');
-    if (routine.crianca.usuarioId !== userId) throw new ForbiddenException();
+    
+    if (routine.crianca.usuarioId !== userId) {
+      throw new ForbiddenException('Acesso negado.');
+    }
     return routine;
   }
 

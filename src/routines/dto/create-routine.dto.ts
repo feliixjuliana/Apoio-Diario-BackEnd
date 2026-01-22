@@ -1,18 +1,4 @@
-import { IsString, IsNumber, IsBoolean, IsUrl, IsOptional, IsArray, ValidateNested, IsDateString } from 'class-validator';
-import { Type } from 'class-transformer';
-
-class CreateSubtaskDto {
-  @IsString()
-  nomeTarefa: string;
-
-  @IsUrl()
-  @IsOptional()
-  imgTarefa?: string;
-
-  @IsBoolean()
-  @IsOptional()
-  tarefaCompletada?: boolean;
-}
+import { IsString, IsNumber, IsBoolean, IsUrl, IsOptional, IsArray, IsDateString } from 'class-validator';
 
 export class CreateRoutineDto {
   @IsString()
@@ -21,37 +7,35 @@ export class CreateRoutineDto {
   @IsString()
   nomeTarefa: string;
 
-  @IsNumber() // Aceita Float
-  tempoEstimado: number;
+  @IsNumber()
+  duracaoMinutos: number;
+
+  @IsString()
+  horarioInicio: string; 
 
   @IsUrl()
-  imgTarefa: string;
+  @IsOptional()
+  imgTarefa?: string;
 
   @IsString()
   categoria: string;
-
-  @IsBoolean()
-  @IsOptional()
-  recorrente?: boolean;
-
-  @IsBoolean()
-  @IsOptional()
-  favorita?: boolean;
 
   @IsDateString()
   dataTarefa: string;
 
   @IsBoolean()
   @IsOptional()
-  usaSubtarefas?: boolean;
+  recorrente?: boolean;
+
+  @IsArray()
+  @IsOptional()
+  diasSemana?: number[];
+
+  @IsBoolean()
+  @IsOptional()
+  favorita?: boolean;
 
   @IsNumber()
   @IsOptional()
   prioridade?: number;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CreateSubtaskDto)
-  @IsOptional()
-  subtarefas?: CreateSubtaskDto[];
 }

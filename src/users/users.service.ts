@@ -1,14 +1,13 @@
-import {Injectable, ConflictException, UnauthorizedException, NotFoundException, BadRequestException,} from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
-import { User } from './entities/user.entity';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto'
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import * as nodemailer from 'nodemailer';
 import * as crypto from 'crypto';
+import { users } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -23,25 +22,23 @@ export class UsersService {
     );
   }
 
-  async registerUser(dto: CreateUserDto): Promise<User> {
+  async registerUser(dto: CreateUserDto): Promise<users> {
     const existingUser = await this.userRepository.findByEmail(dto.email);
     if (existingUser) throw new ConflictException('Email já está em uso.');
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
     
-    const newUser = new User({ 
+    return this.userRepository.save({ 
       email: dto.email, 
-      password: passwordHash,
+      senha: passwordHash,
       pinParental: dto.pinParental
     });
-
-    return this.userRepository.save(newUser);
   }
 
   async validateUserLogin(email: string, pass: string) {
     const user = await this.userRepository.findByEmail(email);
-    const isValid =
-      user && user.password && (await bcrypt.compare(pass, user.password));
+    const isValid = user && user.senha && (await bcrypt.compare(pass, user.senha));
+    
     if (!isValid) throw new UnauthorizedException('Email ou senha inválidos.');
     
     return this.generateToken(user);
@@ -53,13 +50,11 @@ export class UsersService {
       audience: this.configService.get<string>('google.clientId'),
     });
     const payload = ticket.getPayload();
-    if (!payload || !payload.email)
-      throw new UnauthorizedException('Token do Google inválido.');
+    if (!payload || !payload.email) throw new UnauthorizedException('Token do Google inválido.');
 
     let user = await this.userRepository.findByEmail(payload.email);
     if (!user) {
-      user = new User({ email: payload.email });
-      await this.userRepository.save(user);
+      user = await this.userRepository.save({ email: payload.email });
     }
     return this.generateToken(user);
   }
@@ -69,10 +64,11 @@ export class UsersService {
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
     const resetToken = crypto.randomInt(100000, 999999).toString();
-    user.resetToken = resetToken;
-    user.resetExpires = new Date(Date.now() + 900000); // 15 minutos
     
-    await this.userRepository.update(user);
+    await this.userRepository.update(user.id, {
+      tokenRecuperacao: resetToken,
+      expiracaoRecuperacao: new Date(Date.now() + 900000), // 15 minutos
+    });
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -92,16 +88,17 @@ export class UsersService {
 
   async resetPassword(email: string, newPass: string) {
     const user = await this.userRepository.findByEmail(email);
-    const isValid = user && user.resetExpires && user.resetExpires > new Date();
+    const isValid = user && user.expiracaoRecuperacao && user.expiracaoRecuperacao > new Date();
     
-    if (!isValid)
-      throw new BadRequestException('Tempo para redefinição expirado.');
+    if (!isValid) throw new BadRequestException('Tempo para redefinição expirado.');
 
-    user.password = await bcrypt.hash(newPass, 10);
-    user.resetToken = undefined;
-    user.resetExpires = undefined;
+    const passwordHash = await bcrypt.hash(newPass, 10);
     
-    await this.userRepository.update(user);
+    await this.userRepository.update(user.id, {
+      senha: passwordHash,
+      tokenRecuperacao: null,
+      expiracaoRecuperacao: null,
+    });
   }
 
   async validateResetToken(email: string, code: string) {
@@ -109,13 +106,11 @@ export class UsersService {
 
     const isValid =
       user &&
-      user.resetToken === code &&
-      user.resetExpires &&
-      user.resetExpires > new Date();
+      user.tokenRecuperacao === code &&
+      user.expiracaoRecuperacao &&
+      user.expiracaoRecuperacao > new Date();
 
-    if (!isValid) {
-      throw new BadRequestException('Código inválido ou expirado.');
-    }
+    if (!isValid) throw new BadRequestException('Código inválido ou expirado.');
 
     return { valid: true };
   }
@@ -134,17 +129,14 @@ export class UsersService {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new NotFoundException('Usuário não encontrado.');
     
-    if (user.pinParental !== pin) {
-      throw new UnauthorizedException('PIN Parental inválido.');
-    }
+    if (user.pinParental !== pin) throw new UnauthorizedException('PIN Parental inválido.');
     
     return { valid: true };
   }
 
-  private generateToken(user: User) {
+  private generateToken(user: users) {
     const payload = { id: user.id, email: user.email };
-    const secret =
-      this.configService.get<string>('jwt.secret') || 'JubisDandanApoioDiario';
+    const secret = this.configService.get<string>('jwt.secret') || 'JubisDandanApoioDiario';
     return { token: jwt.sign(payload, secret, { expiresIn: '1d' }) };
   }
 }
