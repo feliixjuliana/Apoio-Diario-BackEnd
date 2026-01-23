@@ -1,4 +1,12 @@
-import { IsString, IsNumber, IsBoolean, IsUrl, IsOptional, IsArray, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsUrl,
+  IsOptional,
+  IsArray,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateRoutineDto {
   @IsString()
@@ -11,11 +19,11 @@ export class CreateRoutineDto {
   duracaoMinutos: number;
 
   @IsString()
-  horarioInicio: string; 
+  horarioInicio: string;
 
   @IsUrl()
   @IsOptional()
-  imgTarefa?: string;
+  imgTarefa: string;
 
   @IsString()
   categoria: string;
