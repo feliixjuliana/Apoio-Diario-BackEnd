@@ -11,6 +11,7 @@ import {
 import { AuthGuard } from 'src/auth/auth.guard';
 import { SubtasksService } from './subtasks.service';
 import { CreateSubtaskDto } from './dto/create-subtask.dto';
+import { UpdateSubtaskDto } from './dto/update-subtask.dto';
 
 @UseGuards(AuthGuard)
 @Controller('subtask')
@@ -29,6 +30,15 @@ export class SubtasksController {
     @Param('id') id: string,
   ) {
     return this.subtasksService.toggleStatus(id, req.user.id, completed);
+  }
+
+  @Patch(':id')
+  update(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: UpdateSubtaskDto,
+  ) {
+    return this.subtasksService.update(id, req.user.id, body);
   }
 
   @Delete(':id')
