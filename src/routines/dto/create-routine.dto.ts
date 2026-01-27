@@ -1,4 +1,14 @@
-import { IsString, IsNumber, IsBoolean, IsUrl, IsOptional, IsArray, IsDateString } from 'class-validator';
+import { IsString, IsNumber, IsBoolean, IsUrl, IsOptional, IsArray, IsDateString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+
+class CreateSubtaskNestedDto {
+  @IsString()
+  nomeTarefa: string;
+
+  @IsUrl()
+  @IsOptional()
+  imgTarefa?: string;
+}
 
 export class CreateRoutineDto {
   @IsString()
@@ -11,11 +21,10 @@ export class CreateRoutineDto {
   duracaoMinutos: number;
 
   @IsString()
-  horarioInicio: string; 
+  horarioInicio: string;
 
   @IsUrl()
-  @IsOptional()
-  imgTarefa?: string;
+  imgTarefa: string;
 
   @IsString()
   categoria: string;
@@ -23,19 +32,25 @@ export class CreateRoutineDto {
   @IsDateString()
   dataTarefa: string;
 
+  @IsArray()
+  @IsOptional()
+  diasSemana?: number[]; 
+
   @IsBoolean()
   @IsOptional()
   recorrente?: boolean;
 
-  @IsArray()
-  @IsOptional()
-  diasSemana?: number[];
-
   @IsBoolean()
   @IsOptional()
-  favorita?: boolean;
+  favorita?: boolean; 
 
   @IsNumber()
   @IsOptional()
-  prioridade?: number;
+  prioridade?: number; 
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateSubtaskNestedDto)
+  @IsOptional()
+  subtarefas?: CreateSubtaskNestedDto[];
 }

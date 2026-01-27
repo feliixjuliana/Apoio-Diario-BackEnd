@@ -34,12 +34,13 @@ export class RoutinesService {
   }
 
   async update(id: string, userId: string, dto: UpdateRoutineDto) {
-    await this.findOne(id, userId);
+    await this.findOne(id, userId); 
     return this.repository.update(id, dto);
   }
 
   async remove(id: string, userId: string) {
     await this.findOne(id, userId);
-    return this.repository.delete(id);
+    await this.repository.delete(id);
+    return { message: 'Rotina e subtarefas removidas com sucesso' };
   }
 }

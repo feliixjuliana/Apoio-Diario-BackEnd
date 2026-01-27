@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
-import { DatabaseModule } from './database/database.module';
-import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
+import { UsersModule } from './users/users.module';
 import { ChildrenModule } from './children/children.module';
+import { RoutinesModule } from './routines/routines.module';
+import { SubtasksModule } from './subtasks/subtasks.module';
 
 @Module({
   imports: [
@@ -12,9 +13,11 @@ import { ChildrenModule } from './children/children.module';
       load: [configuration],
       isGlobal: true,
     }),
-    DatabaseModule,
+    
     UsersModule,
     ChildrenModule,
+    RoutinesModule,
+    SubtasksModule,
   ],
   controllers: [AppController],
 })

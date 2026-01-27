@@ -9,19 +9,19 @@ export class RoutinesRepository {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateRoutineDto): Promise<routine> {
+    const { subtarefas, ...data } = dto;
     return this.prisma.routine.create({
       data: {
-        ...dto,
+        ...data,
         dataTarefa: new Date(dto.dataTarefa),
+        subtarefas: {
+          create: subtarefas?.map(sub => ({
+            nomeTarefa: sub.nomeTarefa,
+            imgTarefa: sub.imgTarefa,
+          })),
+        },
       },
-    });
-  }
-
-  async findByChild(childId: string): Promise<any[]> {
-    return this.prisma.routine.findMany({
-      where: { childId },
       include: { subtarefas: true },
-      orderBy: { horarioInicio: 'asc' }, 
     });
   }
 
@@ -31,22 +31,35 @@ export class RoutinesRepository {
       include: { subtarefas: true, crianca: true },
     });
   }
+  
+  async findChildById(id: string) {
+    return this.prisma.children.findUnique({ where: { id } });
+  }
+
+  async findByChild(childId: string) {
+  return this.prisma.routine.findMany({
+    where: { childId },
+    include: { subtarefas: true }, 
+    orderBy: { horarioInicio: 'asc' }, 
+  });
+}
 
   async update(id: string, dto: UpdateRoutineDto): Promise<routine> {
-    return this.prisma.routine.update({
-      where: { id },
-      data: {
-        ...dto,
-        dataTarefa: dto.dataTarefa ? new Date(dto.dataTarefa) : undefined,
-      },
-    });
-  }
+  const { subtarefas, ...data } = dto;
+  
+  return this.prisma.routine.update({
+    where: { id },
+    data: {
+      ...data,
+      dataTarefa: dto.dataTarefa ? new Date(dto.dataTarefa) : undefined,
+    },
+    include: { subtarefas: true },
+  });
+}
 
   async delete(id: string): Promise<routine> {
     return this.prisma.routine.delete({ where: { id } });
   }
 
-  async findChildById(id: string) {
-    return this.prisma.children.findUnique({ where: { id } });
-  }
+
 }
