@@ -24,7 +24,7 @@ export class UsersService {
 
   async registerUser(dto: CreateUserDto): Promise<users> {
     const existingUser = await this.userRepository.findByEmail(dto.email);
-    if (existingUser) throw new ConflictException('Email já está em uso.');
+    if (existingUser) throw new ConflictException({ message: 'Dados Inválidos', errors: { email: 'Email ja cadastrado' }});
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
     
