@@ -46,13 +46,12 @@ model routine {
   imgTarefa        String    @map("img_tarefa")
   categoria        String
   recorrente       Boolean   @default(false)
-  
   diasSemana       Int[]     @map("dias_semana") 
-  
   favorita         Boolean   @default(false)
   dataTarefa       DateTime  @map("data_tarefa") // Data específica (scheduledAt)
   usaSubtarefas    Boolean   @default(false) @map("usa_subtarefas")
   prioridade       Int       @default(1)
+  tarefaCompletada Boolean   @default(false) @map("tarefa_completada")
   criadoEm         DateTime  @default(now()) @map("criado_em")
 
   crianca          children  @relation(fields: [childId], references: [id], onDelete: Cascade)

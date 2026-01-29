@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { RoutinesRepository } from './routines.repository';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
+import { ReorderRoutinesDto } from './dto/reorder-routines.dto';
 
 @Injectable()
 export class RoutinesService {
@@ -13,6 +14,14 @@ export class RoutinesService {
       throw new ForbiddenException('Acesso negado à criança especificada.');
     }
     return this.repository.create(dto);
+  }
+
+  async reorder(userId: string, dto: ReorderRoutinesDto) {
+    const firstItem = await this.repository.findById(dto.items[0].id);
+    if (!firstItem || firstItem.crianca.usuarioId !== userId) {
+      throw new ForbiddenException();
+    }
+    return this.repository.reorder(dto.items);
   }
 
   async findAllByChild(childId: string, userId: string) {
