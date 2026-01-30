@@ -47,8 +47,10 @@ EMAIL_PASS=sua_senha_app
 Certifique-se de que o **Docker Desktop** está aberto. No terminal, execute:
 
 ```bash
-docker compose down -v
+npx prisma migrate dev -> Migração do nest
 docker compose up -d
+npx prisma migrate dev
+npx prisma migrate dev
 
 ```
 
