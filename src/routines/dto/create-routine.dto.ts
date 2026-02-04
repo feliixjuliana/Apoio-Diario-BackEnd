@@ -1,4 +1,13 @@
-import { IsString, IsNumber, IsBoolean, IsUrl, IsOptional, IsArray, IsDateString, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsUrl,
+  IsOptional,
+  IsArray,
+  IsDateString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class CreateSubtaskNestedDto {
@@ -34,7 +43,7 @@ export class CreateRoutineDto {
 
   @IsArray()
   @IsOptional()
-  diasSemana?: number[]; 
+  diasSemana?: number[];
 
   @IsBoolean()
   @IsOptional()
@@ -42,11 +51,15 @@ export class CreateRoutineDto {
 
   @IsBoolean()
   @IsOptional()
-  favorita?: boolean; 
+  favorita?: boolean;
 
   @IsNumber()
   @IsOptional()
-  prioridade?: number; 
+  prioridade?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  tarefaCompletada?: boolean;
 
   @IsArray()
   @ValidateNested({ each: true })
