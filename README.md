@@ -27,7 +27,7 @@ Crie um arquivo chamado `.env` na raiz do projeto e cole as configurações que 
 
 ```env
 PORT=3000
-JWT_SECRET=JubisDandanApoioDiario
+JWT_SECRET=seu_jwt_secret
 
 POSTGRES_USER=admin
 POSTGRES_PASSWORD=adminsJujuDandanRoro
