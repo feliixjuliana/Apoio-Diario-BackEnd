@@ -39,7 +39,6 @@ POSTGRES_PORT=5433
 GOOGLE_CLIENT_ID=seu_id
 EMAIL_USER=seu_email
 EMAIL_PASS=sua_senha_app
-
 ```
 
 ### 3. Subir o Banco de Dados (Docker)
@@ -49,18 +48,32 @@ Certifique-se de que o **Docker Desktop** está aberto. No terminal, execute:
 ```bash
 docker compose down -v
 docker compose up -d
-
 ```
 
-> O comando `-v` garante que os volumes antigos sejam apagados e o banco seja criado do zero com o arquivo `init.sql` (contendo as tabelas `users` e `children`).
+### 4. Rodar o Prisma
 
-### 4. Rodar a Aplicação
+Primeiro rode:
+
+```bash
+npx prisma generate
+```
+
+> Esse comando vai gerar o Prisma Client.
+
+Após finalizar, rode o seguinte comando:
+
+```bash
+npx prisma migrate deploy
+```
+
+> Esse comando vai fazer rodar as migrations e gerar o banco atualizado.
+
+### 5. Rodar a Aplicação
 
 Com o Docker rodando em segundo plano, inicie o servidor NestJS:
 
 ```bash
 npm run start:dev
-
 ```
 
 ---
@@ -110,4 +123,6 @@ A API utiliza o prefixo `/api`. Aqui está o fluxo para testar:
 * `src/auth`: Guarda e lógica de autenticação JWT.
 * `src/users`: Gerenciamento dos pais/responsáveis.
 * `src/children`: Gerenciamento dos perfis das crianças.
+* `src/routines`: Gerenciamento das atividades.
+* `src/subtasks`: Gerenciamento das sub-atividades.
 * `database/init.sql`: Script de criação automática das tabelas.
