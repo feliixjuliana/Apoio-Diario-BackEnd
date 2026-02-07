@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { RoutinesRepository } from './routines.repository';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
@@ -35,7 +39,7 @@ export class RoutinesService {
   async findOne(id: string, userId: string) {
     const routine = await this.repository.findById(id);
     if (!routine) throw new NotFoundException('Tarefa não encontrada.');
-    
+
     if (routine.crianca.usuarioId !== userId) {
       throw new ForbiddenException('Acesso negado.');
     }
@@ -43,8 +47,18 @@ export class RoutinesService {
   }
 
   async update(id: string, userId: string, dto: UpdateRoutineDto) {
-    await this.findOne(id, userId); 
+    await this.findOne(id, userId);
     return this.repository.update(id, dto);
+  }
+
+  async instantiateFromRecurring(userId: string, baseRoutineId: string) {
+    const routine = await this.repository.findById(baseRoutineId);
+
+    if (!routine || routine.crianca.usuarioId !== userId) {
+      throw new ForbiddenException('Acesso negado à rotina especificada.');
+    }
+
+    return this.repository.instantiateFromRecurring(baseRoutineId);
   }
 
   async remove(id: string, userId: string) {

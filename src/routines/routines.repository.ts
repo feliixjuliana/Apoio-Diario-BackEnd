@@ -84,6 +84,56 @@ export class RoutinesRepository {
     });
   }
 
+  async instantiateFromRecurring(baseRoutineId: string) {
+    const baseRoutine = await this.prisma.routine.findUnique({
+      where: { id: baseRoutineId },
+      include: { subtarefas: true },
+    });
+
+    if (!baseRoutine) throw new Error('Rotina base não encontrada.');
+
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    const lastRoutineToday = await this.prisma.routine.findFirst({
+      where: {
+        childId: baseRoutine.childId,
+        dataTarefa: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      orderBy: { prioridade: 'desc' },
+    });
+
+    const nextPriority = lastRoutineToday ? lastRoutineToday.prioridade + 1 : 1;
+
+    return this.prisma.routine.create({
+      data: {
+        childId: baseRoutine.childId,
+        nomeTarefa: baseRoutine.nomeTarefa,
+        duracaoMinutos: baseRoutine.duracaoMinutos,
+        horarioInicio: baseRoutine.horarioInicio,
+        imgTarefa: baseRoutine.imgTarefa,
+        categoria: baseRoutine.categoria,
+        recorrente: false,
+        diasSemana: baseRoutine.diasSemana,
+        favorita: baseRoutine.favorita,
+        dataTarefa: today,
+        prioridade: nextPriority,
+        tarefaCompletada: false,
+        subtarefas: {
+          create: baseRoutine.subtarefas.map((sub) => ({
+            nomeTarefa: sub.nomeTarefa,
+            imgTarefa: sub.imgTarefa,
+          })),
+        },
+      },
+      include: { subtarefas: true },
+    });
+  }
+
   async delete(id: string): Promise<routine> {
     return this.prisma.routine.delete({ where: { id } });
   }

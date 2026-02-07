@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Patch, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { RoutinesService } from './routines.service';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
@@ -26,13 +36,22 @@ export class RoutinesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Request() req: any, @Body() dto: UpdateRoutineDto) {
+  update(
+    @Param('id') id: string,
+    @Request() req: any,
+    @Body() dto: UpdateRoutineDto,
+  ) {
     return this.routinesService.update(id, req.user.id, dto);
   }
 
   @Patch('reorder/batch')
   reorder(@Request() req, @Body() dto: ReorderRoutinesDto) {
     return this.routinesService.reorder(req.user.id, dto);
+  }
+
+  @Post(':id/instantiate')
+  instantiateFromRecurring(@Request() req: any, @Param('id') id: string) {
+    return this.routinesService.instantiateFromRecurring(req.user.id, id);
   }
 
   @Delete(':id')
