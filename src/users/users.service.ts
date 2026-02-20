@@ -1,4 +1,10 @@
-import { Injectable, ConflictException, UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { UsersRepository } from './users.repository';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -24,23 +30,28 @@ export class UsersService {
 
   async registerUser(dto: CreateUserDto): Promise<users> {
     const existingUser = await this.userRepository.findByEmail(dto.email);
-    if (existingUser) throw new ConflictException({ message: 'Dados Inválidos', errors: { email: 'Email ja cadastrado' }});
+    if (existingUser)
+      throw new ConflictException({
+        message: 'Dados Inválidos',
+        errors: { email: 'E-mail já cadastrado' },
+      });
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    
-    return this.userRepository.save({ 
-      email: dto.email, 
+
+    return this.userRepository.save({
+      email: dto.email,
       senha: passwordHash,
-      pinParental: dto.pinParental
+      pinParental: dto.pinParental,
     });
   }
 
   async validateUserLogin(email: string, pass: string) {
     const user = await this.userRepository.findByEmail(email);
-    const isValid = user && user.senha && (await bcrypt.compare(pass, user.senha));
-    
-    if (!isValid) throw new UnauthorizedException('Email ou senha inválidos.');
-    
+    const isValid =
+      user && user.senha && (await bcrypt.compare(pass, user.senha));
+
+    if (!isValid) throw new UnauthorizedException('E-mail ou senha inválidos.');
+
     return this.generateToken(user);
   }
 
@@ -50,7 +61,8 @@ export class UsersService {
       audience: this.configService.get<string>('google.clientId'),
     });
     const payload = ticket.getPayload();
-    if (!payload || !payload.email) throw new UnauthorizedException('Token do Google inválido.');
+    if (!payload || !payload.email)
+      throw new UnauthorizedException('Token do Google inválido.');
 
     let user = await this.userRepository.findByEmail(payload.email);
     if (!user) {
@@ -64,7 +76,7 @@ export class UsersService {
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
     const resetToken = crypto.randomInt(100000, 999999).toString();
-    
+
     await this.userRepository.update(user.id, {
       tokenRecuperacao: resetToken,
       expiracaoRecuperacao: new Date(Date.now() + 900000), // 15 minutos
@@ -88,12 +100,16 @@ export class UsersService {
 
   async resetPassword(email: string, newPass: string) {
     const user = await this.userRepository.findByEmail(email);
-    const isValid = user && user.expiracaoRecuperacao && user.expiracaoRecuperacao > new Date();
-    
-    if (!isValid) throw new BadRequestException('Tempo para redefinição expirado.');
+    const isValid =
+      user &&
+      user.expiracaoRecuperacao &&
+      user.expiracaoRecuperacao > new Date();
+
+    if (!isValid)
+      throw new BadRequestException('Tempo para redefinição expirado.');
 
     const passwordHash = await bcrypt.hash(newPass, 10);
-    
+
     await this.userRepository.update(user.id, {
       senha: passwordHash,
       tokenRecuperacao: null,
@@ -128,15 +144,17 @@ export class UsersService {
   async validatePin(userId: string, pin: number) {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new NotFoundException('Usuário não encontrado.');
-    
-    if (user.pinParental !== pin) throw new UnauthorizedException('PIN Parental inválido.');
-    
+
+    if (user.pinParental !== pin)
+      throw new UnauthorizedException('PIN Parental inválido.');
+
     return { valid: true };
   }
 
   private generateToken(user: users) {
     const payload = { id: user.id, email: user.email };
-    const secret = this.configService.get<string>('jwt.secret') || 'JubisDandanApoioDiario';
+    const secret =
+      this.configService.get<string>('jwt.secret') || 'JubisDandanApoioDiario';
     return { token: jwt.sign(payload, secret, { expiresIn: '1d' }) };
   }
 }
