@@ -31,32 +31,47 @@ model children {
   animacoesAtivas Boolean  @default(true) @map("animacoes_ativas")
   criadoEm        DateTime @default(now()) @map("criado_em")
 
-  usuario users     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  rotinas routine[]
+  usuario           users              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  rotinas           routine[]
+  routine_templates routine_template[]
 
   @@map("children")
 }
 
 model routine {
-  id               String    @id @default(uuid())
-  childId          String    @map("child_id")
-  nomeTarefa       String    @map("nome_tarefa")
-  duracaoMinutos   Float?    @map("duracao_minutos")
-  horarioInicio    String?   @map("horario_inicio")
-  imgTarefa        String    @map("img_tarefa")
-  recorrente       Boolean   @default(false)
-  diasSemana       Int[]     @map("dias_semana")
-  favorita         Boolean   @default(false)
-  dataTarefa       DateTime? @map("data_tarefa") // Data específica (scheduledAt)
-  usaSubtarefas    Boolean   @default(false) @map("usa_subtarefas")
-  prioridade       Int       @default(1)
-  tarefaCompletada Boolean   @default(false) @map("tarefa_completada")
-  criadoEm         DateTime  @default(now()) @map("criado_em")
+  id               String   @id @default(uuid())
+  childId          String   @map("child_id")
+  nomeTarefa       String   @map("nome_tarefa")
+  duracaoMinutos   Float?   @map("duracao_minutos")
+  horarioInicio    String?  @map("horario_inicio")
+  imgTarefa        String   @map("img_tarefa")
+  favorita         Boolean  @default(false)
+  dataTarefa       DateTime @map("data_tarefa") // Data específica (scheduledAt)
+  usaSubtarefas    Boolean  @default(false) @map("usa_subtarefas")
+  prioridade       Int      @default(1)
+  tarefaCompletada Boolean  @default(false) @map("tarefa_completada")
+  criadoEm         DateTime @default(now()) @map("criado_em")
 
   crianca    children  @relation(fields: [childId], references: [id], onDelete: Cascade)
   subtarefas subtask[]
 
   @@map("routines")
+}
+
+model routine_template {
+  id             String   @id @default(uuid())
+  childId        String   @map("child_id")
+  nomeTarefa     String   @map("nome_tarefa")
+  duracaoMinutos Float?   @map("duracao_minutos")
+  horarioInicio  String?  @map("horario_inicio")
+  imgTarefa      String   @map("img_tarefa")
+  favorita       Boolean  @default(false)
+  criadoEm       DateTime @default(now()) @map("criado_em")
+
+  crianca    children           @relation(fields: [childId], references: [id], onDelete: Cascade)
+  subtarefas template_subtask[]
+
+  @@map("routine_templates")
 }
 
 model subtask {
@@ -70,4 +85,16 @@ model subtask {
   rotinaMae routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
 
   @@map("subtask")
+}
+
+model template_subtask {
+  id         String   @id @default(uuid())
+  templateId String   @map("template_id")
+  nomeTarefa String
+  imgTarefa  String?
+  criadoEm   DateTime @default(now()) @map("criado_em")
+
+  templateMae routine_template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@map("template_subtask")
 }

@@ -49,9 +49,12 @@ export class RoutinesController {
     return this.routinesService.reorder(req.user.id, dto);
   }
 
-  @Post(':id/instantiate')
-  instantiateFromRecurring(@Request() req: any, @Param('id') id: string) {
-    return this.routinesService.instantiateFromRecurring(req.user.id, id);
+  @Post('from-template/:templateId')
+  createFromTemplate(
+    @Param('templateId') templateId: string,
+    @Request() req: any,
+  ) {
+    return this.routinesService.createFromTemplate(templateId, req.user.id);
   }
 
   @Delete(':id')

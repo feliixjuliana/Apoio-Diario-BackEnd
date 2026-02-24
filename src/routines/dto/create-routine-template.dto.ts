@@ -5,13 +5,11 @@ import {
   IsUrl,
   IsOptional,
   IsArray,
-  IsDateString,
   ValidateNested,
-  IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class CreateSubtaskNestedDto {
+class CreateTemplateSubtaskDto {
   @IsString()
   nomeTarefa: string;
 
@@ -20,7 +18,7 @@ class CreateSubtaskNestedDto {
   imgTarefa?: string;
 }
 
-export class CreateRoutineDto {
+export class CreateRoutineTemplateDto {
   @IsString()
   childId: string;
 
@@ -38,21 +36,13 @@ export class CreateRoutineDto {
   @IsUrl()
   imgTarefa: string;
 
-  @IsNotEmpty()
-  @IsDateString()
-  dataTarefa: string; // SEM validação condicional agora
-
   @IsBoolean()
   @IsOptional()
   favorita?: boolean;
 
-  @IsNumber()
-  @IsOptional()
-  prioridade?: number;
-
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => CreateSubtaskNestedDto)
+  @Type(() => CreateTemplateSubtaskDto)
   @IsOptional()
-  subtarefas?: CreateSubtaskNestedDto[];
+  subtarefas?: CreateTemplateSubtaskDto[];
 }

@@ -7,10 +7,14 @@ import { RoutinesRepository } from './routines.repository';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { ReorderRoutinesDto } from './dto/reorder-routines.dto';
+import { RoutineTemplatesRepository } from './routines-templates.repository';
 
 @Injectable()
 export class RoutinesService {
-  constructor(private readonly repository: RoutinesRepository) {}
+  constructor(
+    private readonly repository: RoutinesRepository,
+    private readonly templateRepository: RoutineTemplatesRepository,
+  ) {}
 
   async create(userId: string, dto: CreateRoutineDto) {
     const child = await this.repository.findChildById(dto.childId);
@@ -51,14 +55,36 @@ export class RoutinesService {
     return this.repository.update(id, dto);
   }
 
-  async instantiateFromRecurring(userId: string, baseRoutineId: string) {
-    const routine = await this.repository.findById(baseRoutineId);
+  async createFromTemplate(templateId: string, userId: string) {
+    const template = await this.templateRepository.findById(templateId);
 
-    if (!routine || routine.crianca.usuarioId !== userId) {
-      throw new ForbiddenException('Acesso negado à rotina especificada.');
+    if (!template) {
+      throw new NotFoundException('Template não encontrado.');
     }
 
-    return this.repository.instantiateFromRecurring(baseRoutineId);
+    const child = await this.repository.findChildById(template.childId);
+
+    if (!child || child.usuarioId !== userId) {
+      throw new ForbiddenException('Acesso negado.');
+    }
+
+    const today = new Date();
+
+    const dto: CreateRoutineDto = {
+      childId: template.childId,
+      nomeTarefa: template.nomeTarefa,
+      duracaoMinutos: template.duracaoMinutos ?? undefined,
+      horarioInicio: template.horarioInicio ?? undefined,
+      imgTarefa: template.imgTarefa,
+      dataTarefa: today.toISOString(),
+      favorita: template.favorita,
+      subtarefas: template.subtarefas.map((sub) => ({
+        nomeTarefa: sub.nomeTarefa,
+        imgTarefa: sub.imgTarefa ?? undefined,
+      })),
+    };
+
+    return this.repository.create(dto);
   }
 
   async remove(id: string, userId: string) {
