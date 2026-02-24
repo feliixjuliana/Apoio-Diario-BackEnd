@@ -7,6 +7,8 @@ import {
   IsArray,
   IsDateString,
   ValidateNested,
+  IsNotEmpty,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -27,17 +29,18 @@ export class CreateRoutineDto {
   nomeTarefa: string;
 
   @IsNumber()
+  @IsOptional()
   duracaoMinutos: number;
 
   @IsString()
+  @IsOptional()
   horarioInicio: string;
 
   @IsUrl()
   imgTarefa: string;
 
-  @IsString()
-  categoria: string;
-
+  @ValidateIf((o) => !o.recorrente)
+  @IsNotEmpty()
   @IsDateString()
   dataTarefa: string;
 

@@ -116,7 +116,6 @@ export class RoutinesRepository {
         duracaoMinutos: baseRoutine.duracaoMinutos,
         horarioInicio: baseRoutine.horarioInicio,
         imgTarefa: baseRoutine.imgTarefa,
-        categoria: baseRoutine.categoria,
         recorrente: false,
         diasSemana: baseRoutine.diasSemana,
         favorita: baseRoutine.favorita,

@@ -11,12 +11,12 @@ model users {
   id                   String    @id @default(uuid())
   email                String    @unique
   senha                String?
-  pinParental          Int       
+  pinParental          Int
   criadoEm             DateTime  @default(now()) @map("criado_em")
   tokenRecuperacao     String?   @map("token_recuperacao")
   expiracaoRecuperacao DateTime? @map("expiracao_recuperacao")
-  
-  criancas             children[] 
+
+  criancas children[]
 
   @@map("client")
 }
@@ -31,8 +31,8 @@ model children {
   animacoesAtivas Boolean  @default(true) @map("animacoes_ativas")
   criadoEm        DateTime @default(now()) @map("criado_em")
 
-  usuario         users    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  rotinas         routine[] 
+  usuario users     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  rotinas routine[]
 
   @@map("children")
 }
@@ -41,34 +41,33 @@ model routine {
   id               String    @id @default(uuid())
   childId          String    @map("child_id")
   nomeTarefa       String    @map("nome_tarefa")
-  duracaoMinutos   Float     @map("duracao_minutos")
-  horarioInicio    String    @map("horario_inicio")
+  duracaoMinutos   Float?    @map("duracao_minutos")
+  horarioInicio    String?   @map("horario_inicio")
   imgTarefa        String    @map("img_tarefa")
-  categoria        String
   recorrente       Boolean   @default(false)
-  diasSemana       Int[]     @map("dias_semana") 
+  diasSemana       Int[]     @map("dias_semana")
   favorita         Boolean   @default(false)
-  dataTarefa       DateTime  @map("data_tarefa") // Data específica (scheduledAt)
+  dataTarefa       DateTime? @map("data_tarefa") // Data específica (scheduledAt)
   usaSubtarefas    Boolean   @default(false) @map("usa_subtarefas")
   prioridade       Int       @default(1)
   tarefaCompletada Boolean   @default(false) @map("tarefa_completada")
   criadoEm         DateTime  @default(now()) @map("criado_em")
 
-  crianca          children  @relation(fields: [childId], references: [id], onDelete: Cascade)
-  subtarefas       subtask[] 
+  crianca    children  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  subtarefas subtask[]
 
-  @@map("routines") 
+  @@map("routines")
 }
 
 model subtask {
   id               String   @id @default(uuid())
   routineId        String   @map("routine_id")
   nomeTarefa       String
-  imgTarefa        String?  
+  imgTarefa        String?
   tarefaCompletada Boolean  @default(false) @map("tarefa_completada")
   criadoEm         DateTime @default(now()) @map("criado_em")
 
-  rotinaMae        routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  rotinaMae routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
 
-  @@map("subtask") 
+  @@map("subtask")
 }
