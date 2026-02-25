@@ -23,6 +23,21 @@ export class RoutinesService {
     if (!child || child.usuarioId !== userId) {
       throw new ForbiddenException('Acesso negado à criança especificada.');
     }
+
+    if (dto.salvarComoTemplate && !dto.dataTarefa) {
+      return this.templateRepository.create({
+        childId: dto.childId,
+        nomeTarefa: dto.nomeTarefa,
+        duracaoMinutos: dto.duracaoMinutos,
+        imgTarefa: dto.imgTarefa,
+        favorita: dto.favorita,
+        subtarefas: dto.subtarefas?.map((sub) => ({
+          nomeTarefa: sub.nomeTarefa,
+          imgTarefa: sub.imgTarefa,
+        })),
+      });
+    }
+
     const createdRoutine = await this.repository.create(dto);
 
     if (dto.salvarComoTemplate) {
@@ -86,7 +101,8 @@ export class RoutinesService {
       throw new ForbiddenException('Acesso negado.');
     }
 
-    const today = new Date();
+    const onlyDate = new Date().toISOString().split('T')[0];
+    const today = new Date(`${onlyDate}T00:00:00.000Z`);
 
     const dto: CreateRoutineDto = {
       childId: template.childId,
@@ -104,24 +120,36 @@ export class RoutinesService {
     return this.repository.create(dto);
   }
 
-  private startOfDay(d: Date) {
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+  private startOfDayUTC(date: Date) {
+    return new Date(
+      Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
   }
 
-  private endOfDay(d: Date) {
+  private endOfDayUTC(date: Date) {
     return new Date(
-      d.getFullYear(),
-      d.getMonth(),
-      d.getDate(),
-      23,
-      59,
-      59,
-      999,
+      Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        23,
+        59,
+        59,
+        999,
+      ),
     );
   }
 
   private toWeekday1to7(d: Date) {
-    return d.getDay() + 1;
+    return d.getUTCDay() + 1;
   }
 
   async ensureRecurrencesForDate(
@@ -135,15 +163,14 @@ export class RoutinesService {
     }
 
     const onlyDate = dateISO.split('T')[0];
-    const [year, month, day] = onlyDate.split('-').map(Number);
-    const target = new Date(year, month - 1, day);
+    const target = new Date(`${onlyDate}T00:00:00.000Z`);
 
-    const targetStart = this.startOfDay(target);
+    const targetStart = this.startOfDayUTC(target);
 
-    const todayStart = this.startOfDay(new Date());
+    const todayStart = this.startOfDayUTC(new Date());
     if (targetStart < todayStart) return;
 
-    const targetEnd = this.endOfDay(target);
+    const targetEnd = this.endOfDayUTC(target);
 
     const weekday = this.toWeekday1to7(targetStart);
 

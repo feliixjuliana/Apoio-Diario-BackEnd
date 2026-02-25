@@ -10,14 +10,17 @@ export class RoutinesRepository {
 
   async create(dto: CreateRoutineDto): Promise<routine> {
     const { subtarefas, salvarComoTemplate, ...data } = dto;
-    const date = new Date(dto.dataTarefa);
+    const onlyDate = dto.dataTarefa.split('T')[0];
+
+    const start = new Date(`${onlyDate}T00:00:00.000Z`);
+    const end = new Date(`${onlyDate}T23:59:59.999Z`);
 
     const lastRoutine = await this.prisma.routine.findFirst({
       where: {
         childId: dto.childId,
         dataTarefa: {
-          gte: new Date(date.setHours(0, 0, 0, 0)),
-          lte: new Date(date.setHours(23, 59, 59, 999)),
+          gte: start,
+          lte: end,
         },
       },
       orderBy: { prioridade: 'desc' },
@@ -73,10 +76,8 @@ export class RoutinesRepository {
 
   async findByChildAndDate(childId: string, dateISO: string) {
     const onlyDate = dateISO.split('T')[0];
-    const [year, month, day] = onlyDate.split('-').map(Number);
-
-    const start = new Date(year, month - 1, day, 0, 0, 0, 0);
-    const end = new Date(year, month - 1, day, 23, 59, 59, 999);
+    const start = new Date(`${onlyDate}T00:00:00.000Z`);
+    const end = new Date(`${onlyDate}T23:59:59.999Z`);
 
     return this.prisma.routine.findMany({
       where: {

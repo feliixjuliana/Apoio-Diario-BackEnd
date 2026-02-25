@@ -8,6 +8,7 @@ import {
   IsDateString,
   ValidateNested,
   IsNotEmpty,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -34,9 +35,10 @@ export class CreateRoutineDto {
   @IsUrl()
   imgTarefa: string;
 
+  @ValidateIf((o) => !o.salvarComoTemplate)
   @IsNotEmpty()
   @IsDateString()
-  dataTarefa: string; // SEM validação condicional agora
+  dataTarefa: string;
 
   @IsBoolean()
   @IsOptional()
