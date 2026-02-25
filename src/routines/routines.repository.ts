@@ -9,7 +9,7 @@ export class RoutinesRepository {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateRoutineDto): Promise<routine> {
-    const { subtarefas, ...data } = dto;
+    const { subtarefas, salvarComoTemplate, ...data } = dto;
     const date = new Date(dto.dataTarefa);
 
     const lastRoutine = await this.prisma.routine.findFirst({

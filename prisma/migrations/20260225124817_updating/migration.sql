@@ -30,19 +30,31 @@ CREATE TABLE "routines" (
     "id" TEXT NOT NULL,
     "child_id" TEXT NOT NULL,
     "nome_tarefa" TEXT NOT NULL,
-    "duracao_minutos" DOUBLE PRECISION NOT NULL,
-    "horario_inicio" TEXT NOT NULL,
+    "duracao_minutos" DOUBLE PRECISION,
+    "horario_inicio" TEXT,
     "img_tarefa" TEXT NOT NULL,
-    "categoria" TEXT NOT NULL,
-    "recorrente" BOOLEAN NOT NULL DEFAULT false,
-    "dias_semana" INTEGER[],
     "favorita" BOOLEAN NOT NULL DEFAULT false,
     "data_tarefa" TIMESTAMP(3) NOT NULL,
     "usa_subtarefas" BOOLEAN NOT NULL DEFAULT false,
     "prioridade" INTEGER NOT NULL DEFAULT 1,
+    "tarefa_completada" BOOLEAN NOT NULL DEFAULT false,
     "criado_em" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "routines_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "routine_templates" (
+    "id" TEXT NOT NULL,
+    "child_id" TEXT NOT NULL,
+    "nome_tarefa" TEXT NOT NULL,
+    "duracao_minutos" DOUBLE PRECISION,
+    "horario_inicio" TEXT,
+    "img_tarefa" TEXT NOT NULL,
+    "favorita" BOOLEAN NOT NULL DEFAULT false,
+    "criado_em" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "routine_templates_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -57,6 +69,17 @@ CREATE TABLE "subtask" (
     CONSTRAINT "subtask_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "template_subtask" (
+    "id" TEXT NOT NULL,
+    "template_id" TEXT NOT NULL,
+    "nomeTarefa" TEXT NOT NULL,
+    "imgTarefa" TEXT,
+    "criado_em" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "template_subtask_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "client_email_key" ON "client"("email");
 
@@ -67,4 +90,10 @@ ALTER TABLE "children" ADD CONSTRAINT "children_usuario_id_fkey" FOREIGN KEY ("u
 ALTER TABLE "routines" ADD CONSTRAINT "routines_child_id_fkey" FOREIGN KEY ("child_id") REFERENCES "children"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "routine_templates" ADD CONSTRAINT "routine_templates_child_id_fkey" FOREIGN KEY ("child_id") REFERENCES "children"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "subtask" ADD CONSTRAINT "subtask_routine_id_fkey" FOREIGN KEY ("routine_id") REFERENCES "routines"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_subtask" ADD CONSTRAINT "template_subtask_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "routine_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;

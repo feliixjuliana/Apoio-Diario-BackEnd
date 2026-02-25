@@ -21,7 +21,24 @@ export class RoutinesService {
     if (!child || child.usuarioId !== userId) {
       throw new ForbiddenException('Acesso negado à criança especificada.');
     }
-    return this.repository.create(dto);
+    const createdRoutine = await this.repository.create(dto);
+
+    if (dto.salvarComoTemplate) {
+      await this.templateRepository.create({
+        childId: dto.childId,
+        nomeTarefa: dto.nomeTarefa,
+        duracaoMinutos: dto.duracaoMinutos,
+        horarioInicio: dto.horarioInicio,
+        imgTarefa: dto.imgTarefa,
+        favorita: dto.favorita,
+        subtarefas: dto.subtarefas?.map((sub) => ({
+          nomeTarefa: sub.nomeTarefa,
+          imgTarefa: sub.imgTarefa,
+        })),
+      });
+    }
+
+    return createdRoutine;
   }
 
   async reorder(userId: string, dto: ReorderRoutinesDto) {

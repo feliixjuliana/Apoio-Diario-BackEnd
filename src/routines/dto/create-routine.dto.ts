@@ -55,4 +55,8 @@ export class CreateRoutineDto {
   @Type(() => CreateSubtaskNestedDto)
   @IsOptional()
   subtarefas?: CreateSubtaskNestedDto[];
+
+  @IsBoolean()
+  @IsOptional()
+  salvarComoTemplate?: boolean;
 }

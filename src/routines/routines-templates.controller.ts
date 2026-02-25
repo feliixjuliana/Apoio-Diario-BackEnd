@@ -17,11 +17,6 @@ import { AuthGuard } from 'src/auth/auth.guard';
 export class RoutineTemplatesController {
   constructor(private readonly repository: RoutineTemplatesRepository) {}
 
-  @Post()
-  create(@Body() dto: CreateRoutineTemplateDto) {
-    return this.repository.create(dto);
-  }
-
   @Get(':childId')
   findByChild(@Param('childId') childId: string) {
     return this.repository.findByChild(childId);
