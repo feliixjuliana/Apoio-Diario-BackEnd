@@ -8,7 +8,6 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { CreateRoutineTemplateDto } from './dto/create-routine-template.dto';
 import { RoutineTemplatesRepository } from './routines-templates.repository';
 import { AuthGuard } from 'src/auth/auth.guard';
 

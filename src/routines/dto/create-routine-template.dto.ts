@@ -29,10 +29,6 @@ export class CreateRoutineTemplateDto {
   @IsOptional()
   duracaoMinutos?: number;
 
-  @IsString()
-  @IsOptional()
-  horarioInicio?: string;
-
   @IsUrl()
   imgTarefa: string;
 

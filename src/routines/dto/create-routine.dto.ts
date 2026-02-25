@@ -31,10 +31,6 @@ export class CreateRoutineDto {
   @IsOptional()
   duracaoMinutos?: number;
 
-  @IsString()
-  @IsOptional()
-  horarioInicio?: string;
-
   @IsUrl()
   imgTarefa: string;
 

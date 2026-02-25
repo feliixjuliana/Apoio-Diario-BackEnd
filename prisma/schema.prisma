@@ -31,9 +31,10 @@ model children {
   animacoesAtivas Boolean  @default(true) @map("animacoes_ativas")
   criadoEm        DateTime @default(now()) @map("criado_em")
 
-  usuario           users              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  rotinas           routine[]
-  routine_templates routine_template[]
+  usuario                  users                     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  rotinas                  routine[]
+  routine_templates        routine_template[]
+  routine_recurrence_rules routine_recurrence_rule[]
 
   @@map("children")
 }
@@ -43,18 +44,20 @@ model routine {
   childId          String   @map("child_id")
   nomeTarefa       String   @map("nome_tarefa")
   duracaoMinutos   Float?   @map("duracao_minutos")
-  horarioInicio    String?  @map("horario_inicio")
   imgTarefa        String   @map("img_tarefa")
   favorita         Boolean  @default(false)
-  dataTarefa       DateTime @map("data_tarefa") // Data específica (scheduledAt)
+  dataTarefa       DateTime @map("data_tarefa")
   usaSubtarefas    Boolean  @default(false) @map("usa_subtarefas")
   prioridade       Int      @default(1)
   tarefaCompletada Boolean  @default(false) @map("tarefa_completada")
   criadoEm         DateTime @default(now()) @map("criado_em")
 
-  crianca    children  @relation(fields: [childId], references: [id], onDelete: Cascade)
-  subtarefas subtask[]
+  crianca          children                 @relation(fields: [childId], references: [id], onDelete: Cascade)
+  subtarefas       subtask[]
+  recurrenceRuleId String?                  @map("recurrence_rule_id")
+  recurrenceRule   routine_recurrence_rule? @relation(fields: [recurrenceRuleId], references: [id], onDelete: SetNull)
 
+  @@index([recurrenceRuleId])
   @@map("routines")
 }
 
@@ -63,7 +66,6 @@ model routine_template {
   childId        String   @map("child_id")
   nomeTarefa     String   @map("nome_tarefa")
   duracaoMinutos Float?   @map("duracao_minutos")
-  horarioInicio  String?  @map("horario_inicio")
   imgTarefa      String   @map("img_tarefa")
   favorita       Boolean  @default(false)
   criadoEm       DateTime @default(now()) @map("criado_em")
@@ -97,4 +99,38 @@ model template_subtask {
   templateMae routine_template @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@map("template_subtask")
+}
+
+model routine_recurrence_rule {
+  id      String @id @default(uuid())
+  childId String @map("child_id")
+
+  nomeTarefa     String  @map("nome_tarefa")
+  duracaoMinutos Float?  @map("duracao_minutos")
+  imgTarefa      String  @map("img_tarefa")
+  favorita       Boolean @default(false)
+
+  diasSemana Int[]   @map("dias_semana")
+  ativo      Boolean @default(true)
+
+  criadoEm DateTime @default(now()) @map("criado_em")
+
+  crianca    children  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  instancias routine[]
+
+  subtarefas recurrence_subtask[]
+
+  @@map("routine_recurrence_rules")
+}
+
+model recurrence_subtask {
+  id         String   @id @default(uuid())
+  ruleId     String   @map("rule_id")
+  nomeTarefa String
+  imgTarefa  String?
+  criadoEm   DateTime @default(now()) @map("criado_em")
+
+  regraMae routine_recurrence_rule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@map("recurrence_subtask")
 }

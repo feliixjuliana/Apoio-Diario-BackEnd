@@ -8,6 +8,7 @@ import {
   Param,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import { RoutinesService } from './routines.service';
 import { CreateRoutineDto } from './dto/create-routine.dto';
@@ -23,6 +24,19 @@ export class RoutinesController {
   @Post()
   create(@Request() req: any, @Body() dto: CreateRoutineDto) {
     return this.routinesService.create(req.user.id, dto);
+  }
+
+  @Get('day')
+  findByChildAndDate(
+    @Request() req: any,
+    @Query('childId') childId: string,
+    @Query('date') dateISO: string,
+  ) {
+    return this.routinesService.findAllByChildAndDate(
+      childId,
+      dateISO,
+      req.user.id,
+    );
   }
 
   @Get('child/:childId')

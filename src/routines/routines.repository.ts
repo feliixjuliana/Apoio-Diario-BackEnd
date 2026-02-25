@@ -71,6 +71,23 @@ export class RoutinesRepository {
     });
   }
 
+  async findByChildAndDate(childId: string, dateISO: string) {
+    const onlyDate = dateISO.split('T')[0];
+    const [year, month, day] = onlyDate.split('-').map(Number);
+
+    const start = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const end = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+    return this.prisma.routine.findMany({
+      where: {
+        childId,
+        dataTarefa: { gte: start, lte: end },
+      },
+      include: { subtarefas: true },
+      orderBy: { prioridade: 'asc' },
+    });
+  }
+
   async update(id: string, dto: UpdateRoutineDto): Promise<routine> {
     const { subtarefas, ...data } = dto;
 

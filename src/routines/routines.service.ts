@@ -8,10 +8,12 @@ import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { ReorderRoutinesDto } from './dto/reorder-routines.dto';
 import { RoutineTemplatesRepository } from './routines-templates.repository';
+import { PrismaService } from 'prisma/prisma.service';
 
 @Injectable()
 export class RoutinesService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly repository: RoutinesRepository,
     private readonly templateRepository: RoutineTemplatesRepository,
   ) {}
@@ -28,7 +30,6 @@ export class RoutinesService {
         childId: dto.childId,
         nomeTarefa: dto.nomeTarefa,
         duracaoMinutos: dto.duracaoMinutos,
-        horarioInicio: dto.horarioInicio,
         imgTarefa: dto.imgTarefa,
         favorita: dto.favorita,
         subtarefas: dto.subtarefas?.map((sub) => ({
@@ -91,7 +92,6 @@ export class RoutinesService {
       childId: template.childId,
       nomeTarefa: template.nomeTarefa,
       duracaoMinutos: template.duracaoMinutos ?? undefined,
-      horarioInicio: template.horarioInicio ?? undefined,
       imgTarefa: template.imgTarefa,
       dataTarefa: today.toISOString(),
       favorita: template.favorita,
@@ -102,6 +102,117 @@ export class RoutinesService {
     };
 
     return this.repository.create(dto);
+  }
+
+  private startOfDay(d: Date) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+  }
+
+  private endOfDay(d: Date) {
+    return new Date(
+      d.getFullYear(),
+      d.getMonth(),
+      d.getDate(),
+      23,
+      59,
+      59,
+      999,
+    );
+  }
+
+  private toWeekday1to7(d: Date) {
+    return d.getDay() + 1;
+  }
+
+  async ensureRecurrencesForDate(
+    userId: string,
+    childId: string,
+    dateISO: string,
+  ) {
+    const child = await this.repository.findChildById(childId);
+    if (!child || child.usuarioId !== userId) {
+      throw new ForbiddenException('Acesso negado.');
+    }
+
+    const onlyDate = dateISO.split('T')[0];
+    const [year, month, day] = onlyDate.split('-').map(Number);
+    const target = new Date(year, month - 1, day);
+
+    const targetStart = this.startOfDay(target);
+
+    const todayStart = this.startOfDay(new Date());
+    if (targetStart < todayStart) return;
+
+    const targetEnd = this.endOfDay(target);
+
+    const weekday = this.toWeekday1to7(targetStart);
+
+    const rules = await this.prisma.routine_recurrence_rule.findMany({
+      where: {
+        childId,
+        ativo: true,
+        diasSemana: { has: weekday },
+      },
+      include: { subtarefas: true },
+    });
+
+    if (!rules.length) return;
+
+    const existing = await this.prisma.routine.findMany({
+      where: {
+        childId,
+        dataTarefa: { gte: targetStart, lte: targetEnd },
+      },
+      select: { id: true, recurrenceRuleId: true, prioridade: true },
+    });
+
+    const existingRuleIds = new Set(
+      existing.map((r) => r.recurrenceRuleId).filter(Boolean) as string[],
+    );
+    let nextPriority =
+      existing.reduce((max, r) => Math.max(max, r.prioridade), 0) + 1;
+
+    const toCreate = rules.filter((rule) => !existingRuleIds.has(rule.id));
+
+    if (!toCreate.length) return;
+
+    await this.prisma.$transaction(
+      toCreate.map((rule) =>
+        this.prisma.routine.create({
+          data: {
+            childId: rule.childId,
+            nomeTarefa: rule.nomeTarefa,
+            duracaoMinutos: rule.duracaoMinutos ?? undefined,
+            imgTarefa: rule.imgTarefa,
+            favorita: rule.favorita,
+            dataTarefa: targetStart,
+            prioridade: nextPriority++,
+            tarefaCompletada: false,
+            recurrenceRuleId: rule.id,
+            subtarefas: {
+              create: rule.subtarefas.map((s) => ({
+                nomeTarefa: s.nomeTarefa,
+                imgTarefa: s.imgTarefa,
+              })),
+            },
+          },
+        }),
+      ),
+    );
+  }
+
+  async findAllByChildAndDate(
+    childId: string,
+    dateISO: string,
+    userId: string,
+  ) {
+    const child = await this.repository.findChildById(childId);
+    if (!child || child.usuarioId !== userId) {
+      throw new ForbiddenException('Acesso negado.');
+    }
+    await this.ensureRecurrencesForDate(userId, childId, dateISO);
+
+    return this.repository.findByChildAndDate(childId, dateISO);
   }
 
   async remove(id: string, userId: string) {
