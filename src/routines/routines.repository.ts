@@ -58,7 +58,10 @@ export class RoutinesRepository {
   async findById(id: string) {
     return this.prisma.routine.findUnique({
       where: { id },
-      include: { subtarefas: true, crianca: true },
+      include: {
+        subtarefas: { orderBy: [{ criadoEm: 'asc' }, { id: 'asc' }] },
+        crianca: true,
+      },
     });
   }
 
@@ -69,7 +72,9 @@ export class RoutinesRepository {
   async findByChild(childId: string) {
     return this.prisma.routine.findMany({
       where: { childId },
-      include: { subtarefas: true },
+      include: {
+        subtarefas: { orderBy: [{ criadoEm: 'asc' }, { id: 'asc' }] },
+      },
       orderBy: { prioridade: 'asc' },
     });
   }
@@ -84,7 +89,9 @@ export class RoutinesRepository {
         childId,
         dataTarefa: { gte: start, lte: end },
       },
-      include: { subtarefas: true },
+      include: {
+        subtarefas: { orderBy: [{ criadoEm: 'asc' }, { id: 'asc' }] },
+      },
       orderBy: { prioridade: 'asc' },
     });
   }
@@ -98,7 +105,9 @@ export class RoutinesRepository {
         ...data,
         dataTarefa: dto.dataTarefa ? new Date(dto.dataTarefa) : undefined,
       },
-      include: { subtarefas: true },
+      include: {
+        subtarefas: { orderBy: [{ criadoEm: 'asc' }, { id: 'asc' }] },
+      },
     });
   }
 

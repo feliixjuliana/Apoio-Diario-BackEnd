@@ -32,6 +32,10 @@ export class CreateRoutineDto {
   @IsOptional()
   duracaoMinutos?: number;
 
+  @IsBoolean()
+  @IsOptional()
+  tarefaCompletada?: boolean;
+
   @IsUrl()
   imgTarefa: string;
 

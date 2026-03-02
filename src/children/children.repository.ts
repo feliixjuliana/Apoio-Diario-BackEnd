@@ -38,9 +38,9 @@ export class ChildrenRepository {
       data: {
         nome: data.nome,
         idade: data.idade,
-        sonsAtivos: data.sonsAtivos,
-        vibracaoAtiva: data.vibracaoAtiva,
-        animacoesAtivas: data.animacoesAtivas,
+        genero: data.genero,
+        condicao: data.condicao,
+        nivelSuporte: data.nivelSuporte,
       },
     });
   }
