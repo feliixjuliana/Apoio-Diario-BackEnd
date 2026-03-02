@@ -16,7 +16,6 @@ export class FilesService {
     });
   }
 
-  // Mudei o nome para uploadImage para bater com o seu Controller
   async uploadImage(file: Express.Multer.File) {
     const bucket = this.configService.get('AWS_S3_BUCKET');
     const region = this.configService.get('AWS_REGION');
