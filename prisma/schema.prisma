@@ -11,7 +11,7 @@ model users {
   id                   String    @id @default(uuid())
   email                String    @unique
   senha                String?
-  pinParental          Int
+  pinParental          Int?
   criadoEm             DateTime  @default(now()) @map("criado_em")
   tokenRecuperacao     String?   @map("token_recuperacao")
   expiracaoRecuperacao DateTime? @map("expiracao_recuperacao")
@@ -26,10 +26,9 @@ model children {
   usuarioId       String   @map("usuario_id")
   nome            String
   idade           Int
-  sonsAtivos      Boolean  @default(true) @map("sons_ativos")
-  vibracaoAtiva   Boolean  @default(true) @map("vibracao_ativa")
-  animacoesAtivas Boolean  @default(true) @map("animacoes_ativas")
-  criadoEm        DateTime @default(now()) @map("criado_em")
+  genero          String?
+  condicao        String?  
+  nivelSuporte    String?  @map("nivel_suporte")
 
   usuario                  users                     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   rotinas                  routine[]

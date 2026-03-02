@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, IsInt, Min, Max } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsInt, Min, Max, IsOptional } from 'class-validator';
 
 export class CreateUserDto {
   @IsEmail({}, { message: 'O e-mail informado é inválido' })
@@ -11,5 +11,6 @@ export class CreateUserDto {
   @IsInt({ message: 'O PIN Parental deve ser um número' })
   @Min(1000, { message: 'O PIN deve ter no mínimo 4 dígitos' })
   @Max(9999, { message: 'O PIN deve ter no máximo 4 dígitos' })
+  @IsOptional()
   pinParental: number;
 }
