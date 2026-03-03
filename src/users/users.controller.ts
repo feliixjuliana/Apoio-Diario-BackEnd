@@ -1,4 +1,15 @@
-import {Controller,Post,Get,Body,Param, HttpCode, HttpStatus, UseGuards, Request} from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Request,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -47,7 +58,7 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Post('auth/validate-pin')
   @HttpCode(HttpStatus.OK)
-  async validatePin(@Request() req, @Body('pin') pin: number) {
+  async validatePin(@Request() req, @Body('pin', ParseIntPipe) pin: number) {
     return this.usersService.validatePin(req.user.id, pin);
   }
 

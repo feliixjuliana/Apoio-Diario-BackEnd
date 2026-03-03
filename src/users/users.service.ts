@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
 import { ConfigService } from '@nestjs/config';
@@ -145,8 +146,8 @@ export class UsersService {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new NotFoundException('Usuário não encontrado.');
 
-    if (user.pinParental !== pin)
-      throw new UnauthorizedException('PIN Parental inválido.');
+    if (user.pinParental !== Number(pin))
+      throw new ForbiddenException('PIN Parental inválido.');
 
     return { valid: true };
   }

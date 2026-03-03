@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ChildrenRepository } from './children.repository';
 import { CreateChildDto } from './dto/create-child.dto';
 import { UpdateChildDto } from './dto/update-child.dto';
@@ -24,7 +28,11 @@ export class ChildrenService {
     return child;
   }
 
-  async update(id: string, userId: string, data: UpdateChildDto): Promise<children> {
+  async update(
+    id: string,
+    userId: string,
+    data: UpdateChildDto,
+  ): Promise<children> {
     const child = await this.repo.findById(id);
 
     if (!child) {
@@ -32,7 +40,9 @@ export class ChildrenService {
     }
 
     if (child.usuarioId !== userId) {
-      throw new ForbiddenException('Você não tem permissão para alterar este perfil');
+      throw new ForbiddenException(
+        'Você não tem permissão para alterar este perfil',
+      );
     }
 
     return this.repo.update(id, data);
@@ -42,10 +52,24 @@ export class ChildrenService {
     const child = await this.findOne(id);
 
     if (child.usuarioId !== userId) {
-      throw new ForbiddenException('Você não tem permissão para remover este perfil');
+      throw new ForbiddenException(
+        'Você não tem permissão para remover este perfil',
+      );
     }
 
     await this.repo.delete(id);
     return { message: 'Perfil removido com sucesso' };
+  }
+
+  private calculateAge(date: Date): number {
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const m = today.getMonth() - date.getMonth();
+
+    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
+      age--;
+    }
+
+    return age;
   }
 }

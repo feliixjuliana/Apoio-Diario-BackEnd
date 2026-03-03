@@ -6,15 +6,15 @@ import {
   Min,
   Max,
   IsIn,
+  IsDateString,
 } from 'class-validator';
 
 export class CreateChildDto {
   @IsString({ message: 'O nome deve ser um texto' })
   nome: string;
 
-  @IsInt({ message: 'A idade deve ser um número inteiro' })
-  @Min(0, { message: 'A idade não pode ser negativa' })
-  idade: number;
+  @IsDateString({}, { message: 'Data de nascimento inválida' })
+  dataNascimento: string;
 
   @IsString()
   @IsOptional()

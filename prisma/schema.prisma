@@ -22,14 +22,14 @@ model users {
 }
 
 model children {
-  id           String   @id @default(uuid())
-  usuarioId    String   @map("usuario_id")
-  nome         String
-  idade        Int
-  genero       String?
-  condicao     String?
-  nivelSuporte String?  @map("nivel_suporte")
-  criadoEm     DateTime @default(now()) @map("criado_em")
+  id             String   @id @default(uuid())
+  usuarioId      String   @map("usuario_id")
+  nome           String
+  dataNascimento DateTime @map("data_nascimento")
+  genero         String?
+  condicao       String?
+  nivelSuporte   String?  @map("nivel_suporte")
+  criadoEm       DateTime @default(now()) @map("criado_em")
 
   usuario                  users                     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   rotinas                  routine[]
