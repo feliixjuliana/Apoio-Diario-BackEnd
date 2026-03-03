@@ -7,6 +7,7 @@ import { RecurrenceRulesModule } from './recurrence-routines/recurrence-rules.mo
 import { RoutinesModule } from './routines/routines.module';
 import { SubtasksModule } from './subtasks/subtasks.module';
 import { UsersModule } from './users/users.module';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { UsersModule } from './users/users.module';
     ChildrenModule,
     RoutinesModule,
     SubtasksModule,
+    FilesModule,
   ],
   controllers: [AppController],
 })

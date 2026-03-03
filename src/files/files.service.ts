@@ -1,6 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
+import path from 'path/win32';
 
 @Injectable()
 export class FilesService {
@@ -8,18 +14,27 @@ export class FilesService {
 
   constructor(private configService: ConfigService) {
     this.s3Client = new S3Client({
-        region: process.env.AWS_REGION!,
-        credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
-        },
+      region: this.configService.getOrThrow<string>('AWS_REGION'),
+      credentials: {
+        accessKeyId: this.configService.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
+        secretAccessKey: this.configService.getOrThrow<string>(
+          'AWS_SECRET_ACCESS_KEY',
+        ),
+      },
     });
   }
 
   async uploadImage(file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Nenhum arquivo enviado.');
     const bucket = this.configService.get('AWS_S3_BUCKET');
     const region = this.configService.get('AWS_REGION');
-    const key = `galeria/${Date.now()}-${file.originalname}`;
+    if (!bucket || !region) {
+      throw new InternalServerErrorException(
+        'Configuração do bucket inválida.',
+      );
+    }
+    const ext = path.extname(file.originalname).toLowerCase();
+    const key = `galeria/${randomUUID()}${ext}`;
 
     await this.s3Client.send(
       new PutObjectCommand({
@@ -27,12 +42,27 @@ export class FilesService {
         Key: key,
         Body: file.buffer,
         ContentType: file.mimetype,
-        ACL: 'public-read', 
+        ACL: 'public-read',
       }),
     );
 
-    return {
-      url: `https://${bucket}.s3.${region}.amazonaws.com/${key}`,
-    };
+    try {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          ACL: 'public-read',
+        }),
+      );
+
+      return {
+        url: `https://${bucket}.s3.${region}.amazonaws.com/${key}`,
+      };
+    } catch (error) {
+      console.error('Erro ao enviar imagem para S3:', error);
+      throw new InternalServerErrorException('Erro ao enviar imagem.');
+    }
   }
 }
