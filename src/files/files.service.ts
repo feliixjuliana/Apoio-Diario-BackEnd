@@ -36,16 +36,6 @@ export class FilesService {
     const ext = path.extname(file.originalname).toLowerCase();
     const key = `galeria/${randomUUID()}${ext}`;
 
-    await this.s3Client.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-        ACL: 'public-read',
-      }),
-    );
-
     try {
       await this.s3Client.send(
         new PutObjectCommand({
@@ -56,7 +46,6 @@ export class FilesService {
           ACL: 'public-read',
         }),
       );
-
       return {
         url: `https://${bucket}.s3.${region}.amazonaws.com/${key}`,
       };

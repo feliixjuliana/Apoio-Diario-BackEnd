@@ -11,11 +11,11 @@ import { FilesService } from './files.service';
 import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('files')
+@UseGuards(AuthGuard)
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
   @Post('upload')
-  @UseGuards(AuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -38,7 +38,6 @@ export class FilesController {
     if (!file) {
       throw new BadRequestException('Nenhum arquivo enviado.');
     }
-
     return this.filesService.uploadImage(file);
   }
 }
