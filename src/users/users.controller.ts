@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   ParseIntPipe,
+  Patch,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '../auth/auth.guard';
@@ -72,5 +73,14 @@ export class UsersController {
   @Get('users/:id')
   findOne(@Param('id') id: string) {
     return this.usersService.getUserById(id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Patch('users/parental-control')
+  async updateParentalControl(
+    @Request() req,
+    @Body('enabled') enabled: boolean,
+  ) {
+    return this.usersService.updateParentalControl(req.user.id, enabled);
   }
 }

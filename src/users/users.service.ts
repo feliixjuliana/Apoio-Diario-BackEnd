@@ -152,6 +152,16 @@ export class UsersService {
     return { valid: true };
   }
 
+  async updateParentalControl(userId: string, enabled: boolean) {
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) throw new NotFoundException('Usuário não encontrado.');
+
+    return this.userRepository.update(userId, {
+      controleParentalAtivo: enabled,
+    });
+  }
+
   private generateToken(user: users) {
     const payload = { id: user.id, email: user.email };
     const secret =

@@ -22,6 +22,7 @@ export class UsersRepository {
       data: {
         senha: data.senha,
         pinParental: data.pinParental,
+        controleParentalAtivo: data.controleParentalAtivo,
         tokenRecuperacao: data.tokenRecuperacao,
         expiracaoRecuperacao: data.expiracaoRecuperacao,
       },

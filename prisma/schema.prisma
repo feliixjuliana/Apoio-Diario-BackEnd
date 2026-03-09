@@ -8,13 +8,14 @@ generator client {
 }
 
 model users {
-  id                   String    @id @default(uuid())
-  email                String    @unique
-  senha                String?
-  pinParental          Int?
-  criadoEm             DateTime  @default(now()) @map("criado_em")
-  tokenRecuperacao     String?   @map("token_recuperacao")
-  expiracaoRecuperacao DateTime? @map("expiracao_recuperacao")
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  senha                 String?
+  pinParental           Int
+  controleParentalAtivo Boolean   @default(true) @map("controle_parental_ativo")
+  criadoEm              DateTime  @default(now()) @map("criado_em")
+  tokenRecuperacao      String?   @map("token_recuperacao")
+  expiracaoRecuperacao  DateTime? @map("expiracao_recuperacao")
 
   criancas children[]
 
