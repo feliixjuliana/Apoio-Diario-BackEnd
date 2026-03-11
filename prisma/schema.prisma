@@ -46,7 +46,6 @@ model routine {
   nomeTarefa       String    @map("nome_tarefa")
   duracaoMinutos   Float?    @map("duracao_minutos")
   imgTarefa        String?   @map("img_tarefa")
-  favorita         Boolean   @default(false)
   dataTarefa       DateTime? @map("data_tarefa")
   usaSubtarefas    Boolean   @default(false) @map("usa_subtarefas")
   prioridade       Int       @default(1)
@@ -58,6 +57,7 @@ model routine {
   recurrenceRuleId String?                  @map("recurrence_rule_id")
   recurrenceRule   routine_recurrence_rule? @relation(fields: [recurrenceRuleId], references: [id], onDelete: SetNull)
 
+  @@unique([recurrenceRuleId, dataTarefa])
   @@index([recurrenceRuleId])
   @@map("routines")
 }
@@ -68,7 +68,6 @@ model routine_template {
   nomeTarefa     String   @map("nome_tarefa")
   duracaoMinutos Float?   @map("duracao_minutos")
   imgTarefa      String   @map("img_tarefa")
-  favorita       Boolean  @default(false)
   criadoEm       DateTime @default(now()) @map("criado_em")
 
   crianca    children           @relation(fields: [childId], references: [id], onDelete: Cascade)
@@ -106,10 +105,9 @@ model routine_recurrence_rule {
   id      String @id @default(uuid())
   childId String @map("child_id")
 
-  nomeTarefa     String  @map("nome_tarefa")
-  duracaoMinutos Float?  @map("duracao_minutos")
-  imgTarefa      String  @map("img_tarefa")
-  favorita       Boolean @default(false)
+  nomeTarefa     String @map("nome_tarefa")
+  duracaoMinutos Float? @map("duracao_minutos")
+  imgTarefa      String @map("img_tarefa")
 
   diasSemana Int[]   @map("dias_semana")
   ativo      Boolean @default(true)

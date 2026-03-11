@@ -8,10 +8,12 @@ import {
   Param,
   Req,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { RecurrenceRulesService } from './recurrence-rules.service';
 import { CreateRecurrenceRuleDto } from './dto/create-recurrence-rule.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { UpdateRecurrenceRuleDto } from './dto/update-recurrence-rule.dto';
 
 @UseGuards(AuthGuard)
 @Controller('recurrence-rules')
@@ -26,6 +28,15 @@ export class RecurrenceRulesController {
   @Get(':childId')
   list(@Req() req: any, @Param('childId') childId: string) {
     return this.service.listByChild(req.user.id, childId);
+  }
+
+  @Patch(':id')
+  update(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: UpdateRecurrenceRuleDto,
+  ) {
+    return this.service.update(req.user.id, id, dto);
   }
 
   @Delete(':id')

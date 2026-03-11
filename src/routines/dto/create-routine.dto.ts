@@ -44,10 +44,6 @@ export class CreateRoutineDto {
   @IsDateString()
   dataTarefa: string;
 
-  @IsBoolean()
-  @IsOptional()
-  favorita?: boolean;
-
   @IsNumber()
   @IsOptional()
   prioridade?: number;

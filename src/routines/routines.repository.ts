@@ -111,6 +111,43 @@ export class RoutinesRepository {
     });
   }
 
+  async findTodayByRule(ruleId: string) {
+    const now = new Date();
+    const start = new Date(now.toISOString().split('T')[0] + 'T00:00:00.000Z');
+    const end = new Date(now.toISOString().split('T')[0] + 'T23:59:59.999Z');
+
+    return this.prisma.routine.findFirst({
+      where: {
+        recurrenceRuleId: ruleId,
+        dataTarefa: {
+          gte: start,
+          lte: end,
+        },
+      },
+      include: {
+        subtarefas: true,
+      },
+    });
+  }
+
+  async replaceSubtasks(routineId: string, subtasks: any[]) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.subtask.deleteMany({
+        where: { routineId },
+      });
+
+      if (subtasks?.length) {
+        await tx.subtask.createMany({
+          data: subtasks.map((s) => ({
+            routineId,
+            nomeTarefa: s.nomeTarefa,
+            imgTarefa: s.imgTarefa,
+          })),
+        });
+      }
+    });
+  }
+
   async delete(id: string): Promise<routine> {
     return this.prisma.routine.delete({ where: { id } });
   }

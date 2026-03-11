@@ -32,10 +32,6 @@ export class CreateRoutineTemplateDto {
   @IsUrl()
   imgTarefa: string;
 
-  @IsBoolean()
-  @IsOptional()
-  favorita?: boolean;
-
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateTemplateSubtaskDto)

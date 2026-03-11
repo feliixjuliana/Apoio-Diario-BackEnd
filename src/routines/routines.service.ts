@@ -30,7 +30,6 @@ export class RoutinesService {
         nomeTarefa: dto.nomeTarefa,
         duracaoMinutos: dto.duracaoMinutos,
         imgTarefa: dto.imgTarefa,
-        favorita: dto.favorita,
         subtarefas: dto.subtarefas?.map((sub) => ({
           nomeTarefa: sub.nomeTarefa,
           imgTarefa: sub.imgTarefa,
@@ -46,7 +45,6 @@ export class RoutinesService {
         nomeTarefa: dto.nomeTarefa,
         duracaoMinutos: dto.duracaoMinutos,
         imgTarefa: dto.imgTarefa,
-        favorita: dto.favorita,
         subtarefas: dto.subtarefas?.map((sub) => ({
           nomeTarefa: sub.nomeTarefa,
           imgTarefa: sub.imgTarefa,
@@ -110,7 +108,6 @@ export class RoutinesService {
       duracaoMinutos: template.duracaoMinutos ?? undefined,
       imgTarefa: template.imgTarefa,
       dataTarefa: today.toISOString(),
-      favorita: template.favorita,
       subtarefas: template.subtarefas.map((sub) => ({
         nomeTarefa: sub.nomeTarefa,
         imgTarefa: sub.imgTarefa ?? undefined,
@@ -211,7 +208,6 @@ export class RoutinesService {
             nomeTarefa: rule.nomeTarefa,
             duracaoMinutos: rule.duracaoMinutos ?? undefined,
             imgTarefa: rule.imgTarefa,
-            favorita: rule.favorita,
             dataTarefa: targetStart,
             prioridade: nextPriority++,
             tarefaCompletada: false,
