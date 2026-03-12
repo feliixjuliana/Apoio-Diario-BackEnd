@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class CreateTemplateSubtaskDto {
+export class CreateTemplateSubtaskDto {
   @IsString()
   nomeTarefa: string;
 

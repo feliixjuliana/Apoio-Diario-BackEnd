@@ -5,10 +5,16 @@ import { RoutinesRepository } from './routines.repository';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { RoutineTemplatesRepository } from './routines-templates.repository';
 import { RoutineTemplatesController } from './routines-templates.controller';
+import { RoutineTemplatesService } from './routines-templates.service';
 @Module({
   imports: [PrismaModule],
   controllers: [RoutinesController, RoutineTemplatesController],
-  providers: [RoutinesService, RoutinesRepository, RoutineTemplatesRepository],
+  providers: [
+    RoutinesService,
+    RoutinesRepository,
+    RoutineTemplatesRepository,
+    RoutineTemplatesService,
+  ],
   exports: [RoutinesService],
 })
 export class RoutinesModule {}
