@@ -14,6 +14,7 @@ import {
 import { UsersService } from './users.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller()
 export class UsersController {
@@ -82,5 +83,15 @@ export class UsersController {
     @Body('enabled') enabled: boolean,
   ) {
     return this.usersService.updateParentalControl(req.user.id, enabled);
+  }
+
+  @UseGuards(AuthGuard)
+  @Patch('users/:id')
+  async updateUser(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: UpdateUserDto,
+  ) {
+    return this.usersService.updateUser(req.user.id, id, body);
   }
 }

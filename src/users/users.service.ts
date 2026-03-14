@@ -15,6 +15,7 @@ import { OAuth2Client } from 'google-auth-library';
 import * as nodemailer from 'nodemailer';
 import * as crypto from 'crypto';
 import { users } from '@prisma/client';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -160,6 +161,38 @@ export class UsersService {
     return this.userRepository.update(userId, {
       controleParentalAtivo: enabled,
     });
+  }
+
+  async updateUser(userId: string, id: string, dto: UpdateUserDto) {
+    if (userId !== id) {
+      throw new ForbiddenException('Você só pode editar sua própria conta.');
+    }
+
+    const user = await this.userRepository.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    const data: any = {};
+
+    if (dto.email) {
+      const existing = await this.userRepository.findByEmail(dto.email);
+      if (existing && existing.id !== id) {
+        throw new ConflictException('E-mail já está em uso.');
+      }
+      data.email = dto.email;
+    }
+
+    if (dto.senha) {
+      data.senha = await bcrypt.hash(dto.senha, 10);
+    }
+
+    if (dto.pinParental !== undefined) {
+      data.pinParental = dto.pinParental;
+    }
+
+    return this.userRepository.update(id, data);
   }
 
   private generateToken(user: users) {
