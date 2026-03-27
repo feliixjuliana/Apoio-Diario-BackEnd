@@ -29,11 +29,11 @@ Crie um arquivo chamado `.env` na raiz do projeto e cole as configurações que 
 PORT=3000
 JWT_SECRET=seu_jwt_secret
 
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=adminsJujuDandanRoro
-POSTGRES_DB=app_db
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5433
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_DB=
+POSTGRES_HOST=
+POSTGRES_PORT=
 
 DATABASE_URL=
 
