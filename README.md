@@ -4,9 +4,9 @@ Este é o backend da aplicação **Apoio Diário**, um gerenciador de rotinas pa
 
 ## 🚀 Pré-requisitos
 
-* **Node.js** (versão 18 ou superior)
-* **Docker Desktop** (ativo e rodando)
-* **Postman** (para testar as rotas)
+- **Node.js** (versão 18 ou superior)
+- **Docker Desktop** (ativo e rodando)
+- **Postman** (para testar as rotas)
 
 ---
 
@@ -35,10 +35,17 @@ POSTGRES_DB=app_db
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5433
 
+DATABASE_URL=
+
 # Se for usar Google Login/Email futuramente:
 GOOGLE_CLIENT_ID=seu_id
 EMAIL_USER=seu_email
 EMAIL_PASS=sua_senha_app
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=
+AWS_S3_BUCKET=
 ```
 
 ### 3. Subir o Banco de Dados (Docker)
@@ -46,7 +53,7 @@ EMAIL_PASS=sua_senha_app
 Certifique-se de que o **Docker Desktop** está aberto. No terminal, execute:
 
 ```bash
-docker compose down -v
+npx prisma migrate dev -> Migração do nest
 docker compose up -d
 ```
 
@@ -87,10 +94,9 @@ A API utiliza o prefixo `/api`. Aqui está o fluxo para testar:
 1. **Registrar**: `POST http://localhost:3000/api/auth/register` (envie email e password).
 
 {
-  "email": "exemplo@email.com",
-  "password": "senha_segura_123"
+"email": "exemplo@email.com",
+"password": "senha_segura_123"
 }
-
 
 2. **Logar**: `POST http://localhost:3000/api/auth/login`.
 3. **Copiar Token**: Copie o `token` recebido na resposta do login.
@@ -99,7 +105,8 @@ A API utiliza o prefixo `/api`. Aqui está o fluxo para testar:
 
 > **Importante**: Em todas as rotas abaixo, vá na aba **Auth** do Postman, selecione **Bearer Token** e cole o seu token.
 
-* **Cadastrar Criança**: `POST http://localhost:3000/api/children`
+- **Cadastrar Criança**: `POST http://localhost:3000/api/children`
+
 ```json
 {
   "nome": "João",
@@ -108,21 +115,19 @@ A API utiliza o prefixo `/api`. Aqui está o fluxo para testar:
   "vibracaoAtiva": true,
   "animacoesAtivas": true
 }
-
 ```
 
-
-* **Listar minhas crianças**: `GET http://localhost:3000/api/children`
-* **Editar perfil**: `PUT http://localhost:3000/api/children/{id_da_crianca}`
-* **Deletar perfil**: `DELETE http://localhost:3000/api/children/{id_da_crianca}`
+- **Listar minhas crianças**: `GET http://localhost:3000/api/children`
+- **Editar perfil**: `PUT http://localhost:3000/api/children/{id_da_crianca}`
+- **Deletar perfil**: `DELETE http://localhost:3000/api/children/{id_da_crianca}`
 
 ---
 
 ## 📂 Estrutura de Pastas Úteis
 
-* `src/auth`: Guarda e lógica de autenticação JWT.
-* `src/users`: Gerenciamento dos pais/responsáveis.
-* `src/children`: Gerenciamento dos perfis das crianças.
-* `src/routines`: Gerenciamento das atividades.
-* `src/subtasks`: Gerenciamento das sub-atividades.
-* `database/init.sql`: Script de criação automática das tabelas.
+- `src/auth`: Guarda e lógica de autenticação JWT.
+- `src/users`: Gerenciamento dos pais/responsáveis.
+- `src/children`: Gerenciamento dos perfis das crianças.
+- `src/routines`: Gerenciamento das atividades.
+- `src/subtasks`: Gerenciamento das sub-atividades.
+- `database/init.sql`: Script de criação automática das tabelas.
