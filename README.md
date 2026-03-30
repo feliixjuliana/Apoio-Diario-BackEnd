@@ -53,7 +53,6 @@ AWS_S3_BUCKET=
 Certifique-se de que o **Docker Desktop** está aberto. No terminal, execute:
 
 ```bash
-npx prisma migrate dev -> Migração do nest
 docker compose up -d
 ```
 
@@ -61,19 +60,19 @@ docker compose up -d
 
 Primeiro rode:
 
+```
+npx prisma migrate dev
+```
+
+> Esse comando vai fazer rodar as migrations e gerar o banco atualizado.
+
+
 ```bash
 npx prisma generate
 ```
 
 > Esse comando vai gerar o Prisma Client.
 
-Após finalizar, rode o seguinte comando:
-
-```bash
-npx prisma migrate deploy
-```
-
-> Esse comando vai fazer rodar as migrations e gerar o banco atualizado.
 
 ### 5. Rodar a Aplicação
 
