@@ -64,14 +64,19 @@ export class RecurrenceRulesService {
     return updatedRule;
   }
 
-  async remove(userId: string, id: string) {
+  async remove(
+    userId: string,
+    id: string,
+    deleteMode: 'future' | 'all' = 'future',
+  ) {
     const rule = await this.rulesRepo.findById(id);
-    if (!rule) throw new NotFoundException('Regra não encontrada.');
+    if (!rule) {
+      throw new NotFoundException('Regra não encontrada.');
+    }
 
     if (rule.crianca.usuarioId !== userId) {
       throw new ForbiddenException('Acesso negado.');
     }
-    await this.rulesRepo.delete(id);
-    return { message: 'Regra removida com sucesso' };
+    await this.rulesRepo.deleteRecurrence(id, deleteMode);
   }
 }

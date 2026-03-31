@@ -23,11 +23,16 @@ export class CreateChildDto {
 
   @IsString()
   @IsOptional()
-  @IsIn(['TEA', 'TDAH', 'Deficiência Intelectual'])
+  @IsIn([
+    'TEA',
+    'TDAH',
+    'Deficiência Intelectual',
+    'Nenhuma das Opções Anteriores',
+  ])
   condicao?: string;
 
   @IsString()
   @IsOptional()
-  @IsIn(['1', '2', '3'], { message: 'O nível de suporte deve ser 1, 2 ou 3' })
+  @IsIn(['1', '2', '3', 'Não sei Informar'])
   nivelSuporte?: string;
 }

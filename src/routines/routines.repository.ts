@@ -11,9 +11,10 @@ export class RoutinesRepository {
   async create(dto: CreateRoutineDto): Promise<routine> {
     const { subtarefas, salvarComoTemplate, ...data } = dto;
     const onlyDate = dto.dataTarefa.split('T')[0];
+    const [year, month, day] = onlyDate.split('-').map(Number);
 
-    const start = new Date(`${onlyDate}T00:00:00.000Z`);
-    const end = new Date(`${onlyDate}T23:59:59.999Z`);
+    const start = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const end = new Date(year, month - 1, day, 23, 59, 59, 999);
 
     const lastRoutine = await this.prisma.routine.findFirst({
       where: {
@@ -32,7 +33,7 @@ export class RoutinesRepository {
       data: {
         ...data,
         prioridade: nextPriority,
-        dataTarefa: new Date(dto.dataTarefa),
+        dataTarefa: new Date(year, month - 1, day),
         subtarefas: {
           create: subtarefas?.map((sub) => ({
             nomeTarefa: sub.nomeTarefa,
@@ -81,8 +82,10 @@ export class RoutinesRepository {
 
   async findByChildAndDate(childId: string, dateISO: string) {
     const onlyDate = dateISO.split('T')[0];
-    const start = new Date(`${onlyDate}T00:00:00.000Z`);
-    const end = new Date(`${onlyDate}T23:59:59.999Z`);
+    const [year, month, day] = onlyDate.split('-').map(Number);
+
+    const start = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const end = new Date(year, month - 1, day, 23, 59, 59, 999);
 
     return this.prisma.routine.findMany({
       where: {
@@ -103,7 +106,13 @@ export class RoutinesRepository {
       where: { id },
       data: {
         ...data,
-        dataTarefa: dto.dataTarefa ? new Date(dto.dataTarefa) : undefined,
+        dataTarefa: dto.dataTarefa
+          ? (() => {
+              const onlyDate = dto.dataTarefa.split('T')[0];
+              const [year, month, day] = onlyDate.split('-').map(Number);
+              return new Date(year, month - 1, day);
+            })()
+          : undefined,
       },
       include: {
         subtarefas: { orderBy: [{ criadoEm: 'asc' }, { id: 'asc' }] },

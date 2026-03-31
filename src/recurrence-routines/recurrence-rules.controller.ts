@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { RecurrenceRulesService } from './recurrence-rules.service';
 import { CreateRecurrenceRuleDto } from './dto/create-recurrence-rule.dto';
@@ -40,7 +41,11 @@ export class RecurrenceRulesController {
   }
 
   @Delete(':id')
-  remove(@Req() req: any, @Param('id') id: string) {
-    return this.service.remove(req.user.id, id);
+  remove(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Query('mode') mode: 'future' | 'all',
+  ) {
+    return this.service.remove(req.user.id, id, mode);
   }
 }

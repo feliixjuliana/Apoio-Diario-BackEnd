@@ -99,8 +99,8 @@ export class RoutinesService {
       throw new ForbiddenException('Acesso negado.');
     }
 
-    const onlyDate = new Date().toISOString().split('T')[0];
-    const today = new Date(`${onlyDate}T00:00:00.000Z`);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     const dto: CreateRoutineDto = {
       childId: template.childId,
@@ -117,36 +117,32 @@ export class RoutinesService {
     return this.repository.create(dto);
   }
 
-  private startOfDayUTC(date: Date) {
+  private startOfDay(date: Date) {
     return new Date(
-      Date.UTC(
-        date.getUTCFullYear(),
-        date.getUTCMonth(),
-        date.getUTCDate(),
-        0,
-        0,
-        0,
-        0,
-      ),
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      0,
+      0,
+      0,
+      0,
     );
   }
 
-  private endOfDayUTC(date: Date) {
+  private endOfDay(date: Date) {
     return new Date(
-      Date.UTC(
-        date.getUTCFullYear(),
-        date.getUTCMonth(),
-        date.getUTCDate(),
-        23,
-        59,
-        59,
-        999,
-      ),
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      23,
+      59,
+      59,
+      999,
     );
   }
 
-  private toWeekday1to7(d: Date) {
-    return d.getUTCDay() + 1;
+  private toWeekday1to7(date: Date) {
+    return date.getDay() + 1;
   }
 
   async ensureRecurrencesForDate(
@@ -160,14 +156,16 @@ export class RoutinesService {
     }
 
     const onlyDate = dateISO.split('T')[0];
-    const target = new Date(`${onlyDate}T00:00:00.000Z`);
+    const [year, month, day] = onlyDate.split('-').map(Number);
 
-    const targetStart = this.startOfDayUTC(target);
+    const target = new Date(year, month - 1, day);
 
-    const todayStart = this.startOfDayUTC(new Date());
+    const targetStart = this.startOfDay(target);
+
+    const todayStart = this.startOfDay(new Date());
     if (targetStart < todayStart) return;
 
-    const targetEnd = this.endOfDayUTC(target);
+    const targetEnd = this.endOfDay(target);
 
     const weekday = this.toWeekday1to7(targetStart);
 

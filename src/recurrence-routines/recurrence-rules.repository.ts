@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateRecurrenceRuleDto } from '../recurrence-routines/dto/create-recurrence-rule.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { UpdateRecurrenceRuleDto } from './dto/update-recurrence-rule.dto';
@@ -71,7 +71,37 @@ export class RecurrenceRulesRepository {
     });
   }
 
-  delete(id: string) {
-    return this.prisma.routine_recurrence_rule.delete({ where: { id } });
+  async deleteRecurrence(id: string, deleteMode: 'future' | 'all') {
+    const now = new Date();
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+
+    if (deleteMode === 'future') {
+      await this.prisma.routine.deleteMany({
+        where: {
+          recurrenceRuleId: id,
+          dataTarefa: {
+            gt: todayStart,
+          },
+        },
+      });
+    }
+
+    if (deleteMode === 'all') {
+      await this.prisma.routine.deleteMany({
+        where: {
+          recurrenceRuleId: id,
+        },
+      });
+    }
+
+    await this.prisma.routine_recurrence_rule.delete({
+      where: { id },
+    });
+
+    return { message: 'Recorrência removida com sucesso' };
   }
 }
