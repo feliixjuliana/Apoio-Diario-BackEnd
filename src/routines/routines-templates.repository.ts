@@ -15,20 +15,21 @@ export class RoutineTemplatesRepository {
       data: {
         ...data,
         subtarefas: {
-          create: subtarefas?.map((sub) => ({
+          create: subtarefas?.map((sub, index) => ({
             nomeTarefa: sub.nomeTarefa,
             imgTarefa: sub.imgTarefa,
+            ordem: index,
           })),
         },
       },
-      include: { subtarefas: true },
+      include: { subtarefas: { orderBy: { ordem: 'asc' } } },
     });
   }
 
   async findByChild(childId: string) {
     return this.prisma.routine_template.findMany({
       where: { childId },
-      include: { subtarefas: true },
+      include: { subtarefas: { orderBy: { ordem: 'asc' } } },
       orderBy: { criadoEm: 'desc' },
     });
   }
@@ -36,7 +37,7 @@ export class RoutineTemplatesRepository {
   async findById(id: string) {
     return this.prisma.routine_template.findUnique({
       where: { id },
-      include: { subtarefas: true, crianca: true },
+      include: { subtarefas: { orderBy: { ordem: 'asc' } }, crianca: true },
     });
   }
 
@@ -55,17 +56,18 @@ export class RoutineTemplatesRepository {
 
       if (subtarefas?.length) {
         await tx.template_subtask.createMany({
-          data: subtarefas.map((s) => ({
+          data: subtarefas.map((s, index) => ({
             templateId: id,
             nomeTarefa: s.nomeTarefa,
             imgTarefa: s.imgTarefa,
+            ordem: index,
           })),
         });
       }
 
       return tx.routine_template.findUnique({
         where: { id },
-        include: { subtarefas: true },
+        include: { subtarefas: { orderBy: { ordem: 'asc' } } },
       });
     });
   }

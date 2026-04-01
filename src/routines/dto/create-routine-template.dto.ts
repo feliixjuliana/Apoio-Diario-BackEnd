@@ -29,8 +29,9 @@ export class CreateRoutineTemplateDto {
   @IsOptional()
   duracaoMinutos?: number;
 
+  @IsOptional()
   @IsUrl()
-  imgTarefa: string;
+  imgTarefa?: string;
 
   @IsArray()
   @ValidateNested({ each: true })

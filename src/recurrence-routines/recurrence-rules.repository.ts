@@ -14,20 +14,21 @@ export class RecurrenceRulesRepository {
       data: {
         ...data,
         subtarefas: {
-          create: subtarefas?.map((s) => ({
+          create: subtarefas?.map((s, index) => ({
             nomeTarefa: s.nomeTarefa,
             imgTarefa: s.imgTarefa,
+            ordem: index,
           })),
         },
       },
-      include: { subtarefas: true },
+      include: { subtarefas: { orderBy: { ordem: 'asc' } } },
     });
   }
 
   findByChild(childId: string) {
     return this.prisma.routine_recurrence_rule.findMany({
       where: { childId, ativo: true },
-      include: { subtarefas: true },
+      include: { subtarefas: { orderBy: { ordem: 'asc' } } },
       orderBy: { criadoEm: 'desc' },
     });
   }
@@ -35,7 +36,7 @@ export class RecurrenceRulesRepository {
   findById(id: string) {
     return this.prisma.routine_recurrence_rule.findUnique({
       where: { id },
-      include: { subtarefas: true, crianca: true },
+      include: { subtarefas: { orderBy: { ordem: 'asc' } }, crianca: true },
     });
   }
 
@@ -56,17 +57,18 @@ export class RecurrenceRulesRepository {
 
       if (subtarefas?.length) {
         await tx.recurrence_subtask.createMany({
-          data: subtarefas.map((s) => ({
+          data: subtarefas.map((s, index) => ({
             ruleId: id,
             nomeTarefa: s.nomeTarefa,
             imgTarefa: s.imgTarefa,
+            ordem: index,
           })),
         });
       }
 
       return tx.routine_recurrence_rule.findUnique({
         where: { id },
-        include: { subtarefas: true },
+        include: { subtarefas: { orderBy: { ordem: 'asc' } } },
       });
     });
   }

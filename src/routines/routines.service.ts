@@ -106,7 +106,7 @@ export class RoutinesService {
       childId: template.childId,
       nomeTarefa: template.nomeTarefa,
       duracaoMinutos: template.duracaoMinutos ?? undefined,
-      imgTarefa: template.imgTarefa,
+      imgTarefa: template.imgTarefa ?? undefined,
       dataTarefa: today.toISOString(),
       subtarefas: template.subtarefas.map((sub) => ({
         nomeTarefa: sub.nomeTarefa,
@@ -175,7 +175,7 @@ export class RoutinesService {
         ativo: true,
         diasSemana: { has: weekday },
       },
-      include: { subtarefas: true },
+      include: { subtarefas: { orderBy: { ordem: 'asc' } } },
     });
 
     if (!rules.length) return;
@@ -211,9 +211,10 @@ export class RoutinesService {
             tarefaCompletada: false,
             recurrenceRuleId: rule.id,
             subtarefas: {
-              create: rule.subtarefas.map((s) => ({
+              create: rule.subtarefas.map((s, index) => ({
                 nomeTarefa: s.nomeTarefa,
                 imgTarefa: s.imgTarefa,
+                ordem: index,
               })),
             },
           },

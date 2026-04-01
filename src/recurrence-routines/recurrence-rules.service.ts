@@ -51,7 +51,7 @@ export class RecurrenceRulesService {
     if (todayRoutine && !todayRoutine.tarefaCompletada) {
       await this.routinesRepo.update(todayRoutine.id, {
         nomeTarefa: updatedRule.nomeTarefa,
-        imgTarefa: updatedRule.imgTarefa,
+        imgTarefa: updatedRule.imgTarefa ?? undefined,
         duracaoMinutos: updatedRule.duracaoMinutos ?? undefined,
       });
 

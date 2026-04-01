@@ -36,8 +36,9 @@ export class CreateRoutineDto {
   @IsOptional()
   tarefaCompletada?: boolean;
 
+  @IsOptional()
   @IsUrl()
-  imgTarefa: string;
+  imgTarefa?: string;
 
   @ValidateIf((o) => !o.salvarComoTemplate)
   @IsNotEmpty()

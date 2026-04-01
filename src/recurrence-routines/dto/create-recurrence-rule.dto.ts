@@ -29,8 +29,9 @@ export class CreateRecurrenceRuleDto {
   @IsString()
   nomeTarefa: string;
 
+  @IsOptional()
   @IsUrl()
-  imgTarefa: string;
+  imgTarefa?: string;
 
   @IsOptional()
   @Type(() => Number)

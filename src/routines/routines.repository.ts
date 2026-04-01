@@ -35,13 +35,14 @@ export class RoutinesRepository {
         prioridade: nextPriority,
         dataTarefa: new Date(year, month - 1, day),
         subtarefas: {
-          create: subtarefas?.map((sub) => ({
+          create: subtarefas?.map((sub, index) => ({
             nomeTarefa: sub.nomeTarefa,
             imgTarefa: sub.imgTarefa,
+            ordem: index,
           })),
         },
       },
-      include: { subtarefas: true },
+      include: { subtarefas: { orderBy: { ordem: 'asc' } } },
     });
   }
 
@@ -60,7 +61,7 @@ export class RoutinesRepository {
     return this.prisma.routine.findUnique({
       where: { id },
       include: {
-        subtarefas: { orderBy: [{ criadoEm: 'asc' }, { id: 'asc' }] },
+        subtarefas: { orderBy: { ordem: 'asc' } },
         crianca: true,
       },
     });
@@ -74,7 +75,7 @@ export class RoutinesRepository {
     return this.prisma.routine.findMany({
       where: { childId },
       include: {
-        subtarefas: { orderBy: [{ criadoEm: 'asc' }, { id: 'asc' }] },
+        subtarefas: { orderBy: { ordem: 'asc' } },
       },
       orderBy: { prioridade: 'asc' },
     });
@@ -93,7 +94,7 @@ export class RoutinesRepository {
         dataTarefa: { gte: start, lte: end },
       },
       include: {
-        subtarefas: { orderBy: [{ criadoEm: 'asc' }, { id: 'asc' }] },
+        subtarefas: { orderBy: { ordem: 'asc' } },
       },
       orderBy: { prioridade: 'asc' },
     });
@@ -115,7 +116,7 @@ export class RoutinesRepository {
           : undefined,
       },
       include: {
-        subtarefas: { orderBy: [{ criadoEm: 'asc' }, { id: 'asc' }] },
+        subtarefas: { orderBy: { ordem: 'asc' } },
       },
     });
   }
@@ -134,7 +135,7 @@ export class RoutinesRepository {
         },
       },
       include: {
-        subtarefas: true,
+        subtarefas: { orderBy: { ordem: 'asc' } },
       },
     });
   }
@@ -147,10 +148,11 @@ export class RoutinesRepository {
 
       if (subtasks?.length) {
         await tx.subtask.createMany({
-          data: subtasks.map((s) => ({
+          data: subtasks.map((s, index) => ({
             routineId,
             nomeTarefa: s.nomeTarefa,
             imgTarefa: s.imgTarefa,
+            ordem: index,
           })),
         });
       }
