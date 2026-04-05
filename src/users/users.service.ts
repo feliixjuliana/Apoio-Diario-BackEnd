@@ -78,10 +78,20 @@ export class UsersService {
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
     const resetToken = crypto.randomInt(100000, 999999).toString();
+    const emailHtml = this.buildForgotPasswordEmailTemplate(resetToken);
+    const emailText = [
+      'Apoio Diario',
+      '',
+      'Recebemos uma solicitacao para redefinir sua senha.',
+      `Use o codigo: ${resetToken}`,
+      '',
+      'Esse codigo expira em 15 minutos.',
+      'Se voce nao solicitou essa alteracao, ignore este e-mail.',
+    ].join('\n');
 
     await this.userRepository.update(user.id, {
       tokenRecuperacao: resetToken,
-      expiracaoRecuperacao: new Date(Date.now() + 900000), // 15 minutos
+      expiracaoRecuperacao: new Date(Date.now() + 900000),
     });
 
     const transporter = nodemailer.createTransport({
@@ -96,7 +106,8 @@ export class UsersService {
       from: this.configService.get<string>('email.user'),
       to: email,
       subject: 'Código de Recuperação - Apoio Diário',
-      text: `Seu código de recuperação é: ${resetToken}`,
+      text: emailText,
+      html: emailHtml,
     });
   }
 
@@ -200,5 +211,34 @@ export class UsersService {
     const secret =
       this.configService.get<string>('jwt.secret') || 'JubisDandanApoioDiario';
     return { token: jwt.sign(payload, secret, { expiresIn: '1d' }) };
+  }
+
+  private buildForgotPasswordEmailTemplate(resetToken: string): string {
+    return `
+      <div style="margin:0;padding:32px 16px;background:linear-gradient(180deg,#f4f7fb 0%,#eef2ff 100%);font-family:Arial,sans-serif;color:#1f2937;">
+        <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:20px;padding:40px 32px;box-shadow:0 20px 45px rgba(15,23,42,0.08);">
+          <h1 style="margin:24px 0 12px;font-size:28px;line-height:1.2;color:#0f172a;">
+            Recuperacao de senha
+          </h1>
+          <p style="margin:0 0 24px;font-size:16px;line-height:1.7;color:#475569;">
+            Recebemos uma solicitacao para redefinir sua senha. Use o codigo abaixo para continuar com a recuperacao da conta.
+          </p>
+          <div style="margin:0 0 24px;padding:24px;border-radius:16px;background:#f8fafc;border:1px solid #e2e8f0;text-align:center;">
+            <div style="margin-bottom:10px;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;">
+              Codigo de verificacao
+            </div>
+            <div style="font-size:36px;font-weight:700;letter-spacing:0.3em;color:#0f172a;">
+              ${resetToken}
+            </div>
+          </div>
+          <p style="margin:0 0 12px;font-size:14px;line-height:1.7;color:#475569;">
+            Esse codigo expira em <strong>15 minutos</strong>.
+          </p>
+          <p style="margin:0;font-size:14px;line-height:1.7;color:#64748b;">
+            Se voce nao solicitou essa alteracao, pode ignorar este e-mail com seguranca.
+          </p>
+        </div>
+      </div>
+    `;
   }
 }
