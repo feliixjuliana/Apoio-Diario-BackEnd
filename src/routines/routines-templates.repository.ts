@@ -17,7 +17,7 @@ export class RoutineTemplatesRepository {
         subtarefas: {
           create: subtarefas?.map((sub, index) => ({
             nomeTarefa: sub.nomeTarefa,
-            imgTarefa: sub.imgTarefa,
+            imgTarefa: sub.imgTarefa ?? null,
             ordem: index,
           })),
         },
