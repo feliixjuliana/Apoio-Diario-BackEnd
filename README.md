@@ -29,6 +29,7 @@ Crie um arquivo chamado `.env` na raiz do projeto e cole as configurações que 
 PORT=3000
 JWT_SECRET=seu_jwt_secret
 
+<<<<<<< Updated upstream
 POSTGRES_USER=
 POSTGRES_PASSWORD=
 POSTGRES_DB=
@@ -36,6 +37,13 @@ POSTGRES_HOST=
 POSTGRES_PORT=
 
 DATABASE_URL=
+=======
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=adminsJujuDandanRoro
+POSTGRES_DB=app_db
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5435
+>>>>>>> Stashed changes
 
 # Se for usar Google Login/Email futuramente:
 GOOGLE_CLIENT_ID=seu_id

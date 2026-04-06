@@ -6,8 +6,9 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { RoutineTemplatesRepository } from './routines-templates.repository';
 import { RoutineTemplatesController } from './routines-templates.controller';
 import { RoutineTemplatesService } from './routines-templates.service';
+import { FilesModule } from 'src/files/files.module';
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, FilesModule],
   controllers: [RoutinesController, RoutineTemplatesController],
   providers: [
     RoutinesService,

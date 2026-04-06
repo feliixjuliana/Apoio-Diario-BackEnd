@@ -2,7 +2,7 @@ export default () => ({
   port: parseInt(process.env.PORT || '3000', 10),
   database: {
     host: process.env.POSTGRES_HOST || 'localhost',
-    port: parseInt(process.env.POSTGRES_PORT || '5433', 10),
+    port: parseInt(process.env.POSTGRES_PORT || '5435', 10),
     user: process.env.POSTGRES_USER || 'admin',
     pass: process.env.POSTGRES_PASSWORD || 'adminpassword',
     name: process.env.POSTGRES_DB || 'app_db',

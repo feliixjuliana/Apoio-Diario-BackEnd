@@ -4,6 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { RoutinesRepository } from './routines.repository';
+import { FilesService } from '../files/files.service';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { ReorderRoutinesDto } from './dto/reorder-routines.dto';
@@ -16,6 +17,7 @@ export class RoutinesService {
     private readonly prisma: PrismaService,
     private readonly repository: RoutinesRepository,
     private readonly templateRepository: RoutineTemplatesRepository,
+    private readonly filesService: FilesService,
   ) {}
 
   async create(userId: string, dto: CreateRoutineDto) {
@@ -72,14 +74,27 @@ export class RoutinesService {
   }
 
   async findOne(id: string, userId: string) {
-    const routine = await this.repository.findById(id);
-    if (!routine) throw new NotFoundException('Tarefa não encontrada.');
+  const routine = await this.repository.findById(id);
+  if (!routine) throw new NotFoundException('Tarefa não encontrada.');
 
-    if (routine.crianca.usuarioId !== userId) {
-      throw new ForbiddenException('Acesso negado.');
-    }
-    return routine;
+  if (routine.crianca.usuarioId !== userId) {
+    throw new ForbiddenException('Acesso negado.');
   }
+
+  if (routine.imgTarefa && !routine.imgTarefa.startsWith('http')) {
+    routine.imgTarefa = await this.filesService.urlImage(routine.imgTarefa);
+  }
+
+  if (routine.subtarefas) {
+    for (const sub of routine.subtarefas) {
+      if (sub.imgTarefa && !sub.imgTarefa.startsWith('http')) {
+        sub.imgTarefa = await this.filesService.urlImage(sub.imgTarefa);
+      }
+    }
+  }
+
+  return routine;
+}
 
   async update(id: string, userId: string, dto: UpdateRoutineDto) {
     await this.findOne(id, userId);

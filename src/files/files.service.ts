@@ -3,7 +3,8 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import path from 'path/win32';
@@ -42,16 +43,24 @@ export class FilesService {
           Bucket: bucket,
           Key: key,
           Body: file.buffer,
-          ContentType: file.mimetype,
-          ACL: 'public-read',
+          ContentType: file.mimetype
         }),
       );
-      return {
-        url: `https://${bucket}.s3.${region}.amazonaws.com/${key}`,
-      };
+      return { key };      
     } catch (error) {
       console.error('Erro ao enviar imagem para S3:', error);
       throw new InternalServerErrorException('Erro ao enviar imagem.');
     }
+  }
+
+  async urlImage(key: string): Promise<string> {
+    const bucket = this.configService.get<string>('AWS_S3_BUCKET');
+
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+
+    return getSignedUrl(this.s3Client, command, { expiresIn: 86400 });
   }
 }
