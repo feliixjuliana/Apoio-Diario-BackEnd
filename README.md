@@ -58,7 +58,15 @@ docker compose up -d
 
 ### 4. Rodar o Prisma
 
-Primeiro rode:
+Caso dê erro algum erro do Prisma ao rodar a aplicação, é bom resetar o banco. Caso não aconteça, pode só pular para o 2º ponto.
+
+1. Rode primeiro:
+
+```
+npx prisma migrate reset
+```
+
+2. depois rode:
 
 ```
 npx prisma migrate dev
@@ -66,13 +74,11 @@ npx prisma migrate dev
 
 > Esse comando vai fazer rodar as migrations e gerar o banco atualizado.
 
-
 ```bash
 npx prisma generate
 ```
 
 > Esse comando vai gerar o Prisma Client.
-
 
 ### 5. Rodar a Aplicação
 
