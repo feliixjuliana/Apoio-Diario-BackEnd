@@ -12,81 +12,106 @@ Este é o backend da aplicação **Apoio Diário**, um gerenciador de rotinas pa
 
 ## 🛠️ Passo a Passo para Rodar
 
-### 1. Clonar e Instalar
+### 1. Instalar as dependências
 
-Abra o terminal na pasta do projeto e execute:
+Na raiz do projeto, instale exatamente as versões registradas no lockfile:
 
-```bash
-npm install
-
+```powershell
+npm ci
 ```
 
-### 2. Configurar Variáveis de Ambiente
+### 2. Configurar o ambiente local
 
-Crie um arquivo chamado `.env` na raiz do projeto e cole as configurações que definimos:
+Crie um `.env` local, nunca versionado, e mantenha a conexão de produção fora da
+estação de desenvolvimento. Os valores abaixo são apenas exemplos; a senha usada
+em `POSTGRES_PASSWORD` deve ser a mesma codificada dentro de `DATABASE_URL`.
 
 ```env
 PORT=3000
-JWT_SECRET=seu_jwt_secret
+JWT_SECRET=<segredo-exclusivo-de-desenvolvimento>
 
-POSTGRES_USER=
-POSTGRES_PASSWORD=
-POSTGRES_DB=
-POSTGRES_HOST=
-POSTGRES_PORT=
+POSTGRES_HOST=127.0.0.1
+POSTGRES_PORT=5433
+POSTGRES_USER=apoio_local
+POSTGRES_PASSWORD=<senha-exclusivamente-local>
+POSTGRES_DB=apoio_diario_local
 
-DATABASE_URL=
+DATABASE_URL=postgresql://apoio_local:<senha-local-url-encoded>@127.0.0.1:5433/apoio_diario_local?schema=public
+```
 
-# Se for usar Google Login/Email futuramente:
-GOOGLE_CLIENT_ID=seu_id
-EMAIL_USER=seu_email
-EMAIL_PASS=sua_senha_app
+Complete as demais integrações somente quando o fluxo exercitado precisar delas:
 
+```env
+GOOGLE_CLIENT_ID=
+EMAIL_USER=
+EMAIL_PASS=
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_REGION=
 AWS_S3_BUCKET=
 ```
 
-### 3. Subir o Banco de Dados (Docker)
+### 3. Subir o PostgreSQL local
 
-Certifique-se de que o **Docker Desktop** está aberto. No terminal, execute:
+Com o Docker Desktop aberto, suba apenas o banco e aguarde o estado `healthy`:
 
-```bash
-docker compose up -d
+```powershell
+docker compose up -d db
+docker compose ps
+docker compose exec db pg_isready -U apoio_local -d apoio_diario_local
 ```
 
-### 4. Rodar o Prisma
+O PostgreSQL fica disponível somente em `127.0.0.1:5433` e persiste os dados em
+um volume local do Docker.
 
-Caso dê erro algum erro do Prisma ao rodar a aplicação, é bom resetar o banco. Caso não aconteça, pode só pular para o 2º ponto.
+### 4. Aplicar as migrations existentes
 
-1. Rode primeiro:
+Confirme primeiro que `DATABASE_URL` aponta para `127.0.0.1:5433`. Em seguida,
+aplique o histórico versionado e gere o Prisma Client:
 
-```
-npx prisma migrate reset
-```
-
-2. depois rode:
-
-```
-npx prisma migrate dev
-```
-
-> Esse comando vai fazer rodar as migrations e gerar o banco atualizado.
-
-```bash
+```powershell
+npm run prisma:local -- migrate status
+npm run prisma:local -- migrate deploy
+npm run prisma:local -- migrate status
 npx prisma generate
 ```
 
-> Esse comando vai gerar o Prisma Client.
+O script `prisma:local` valida host, porta e nome do banco antes de iniciar o
+Prisma. Use `npm run prisma:local -- migrate dev --name <nome-da-migration>`
+somente quando uma task aprovada alterar o `schema.prisma`. O comando protegido
+bloqueia `migrate reset`, pois ele apaga os dados do schema.
 
-### 5. Rodar a Aplicação
+### 5. Rodar a aplicação
 
-Com o Docker rodando em segundo plano, inicie o servidor NestJS:
-
-```bash
+```powershell
 npm run start:dev
 ```
+
+Valide a API em outro PowerShell:
+
+```powershell
+Invoke-RestMethod http://localhost:3000/api
+```
+
+### 6. Executar o E2E em banco isolado
+
+Crie uma vez o banco de testes dentro do mesmo container:
+
+```powershell
+docker compose exec db createdb -U apoio_local apoio_diario_test
+```
+
+Em um PowerShell separado, defina uma `DATABASE_URL` temporária para o banco de
+testes, aplique as migrations e execute o E2E:
+
+```powershell
+$env:DATABASE_URL = "postgresql://apoio_local:<senha-local-url-encoded>@127.0.0.1:5433/apoio_diario_test?schema=public"
+npm run prisma:local -- migrate deploy
+npm run test:e2e -- --runInBand
+```
+
+O teste possui uma trava e será interrompido se a URL não apontar para
+`apoio_diario_test` em `127.0.0.1:5433`.
 
 ---
 

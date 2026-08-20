@@ -18,8 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "prisma:local": "node scripts/run-prisma-local.cjs",
     "deploy": "git pull origin main && npm install && npx prisma migrate deploy && npx prisma generate && nest build && pm2 restart apoio_diario_deploy"
-    
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1000.0",

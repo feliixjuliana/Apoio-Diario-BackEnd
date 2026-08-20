@@ -1,16 +1,23 @@
-version: '3.8'
 services:
   db:
     image: postgres:15
-    container_name: postgres_db
-    restart: always
+    container_name: apoio-diario-postgres-local
+
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: adminsJujuDandanRoro
-      POSTGRES_DB: app_db
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is not set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is not set}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is not set}
+
     ports:
-      - '5433:5432'
+      - '127.0.0.1:5433:5432'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - apoio_diario_postgres_local:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
-  postgres_data:
+  apoio_diario_postgres_local:
