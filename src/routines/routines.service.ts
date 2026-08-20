@@ -30,6 +30,7 @@ export class RoutinesService {
         nomeTarefa: dto.nomeTarefa,
         duracaoMinutos: dto.duracaoMinutos,
         imgTarefa: dto.imgTarefa,
+        horarioInicio: dto.horarioInicio,
         subtarefas: dto.subtarefas?.map((sub) => ({
           nomeTarefa: sub.nomeTarefa,
           imgTarefa: sub.imgTarefa,
@@ -45,6 +46,7 @@ export class RoutinesService {
         nomeTarefa: dto.nomeTarefa,
         duracaoMinutos: dto.duracaoMinutos,
         imgTarefa: dto.imgTarefa,
+        horarioInicio: dto.horarioInicio,
         subtarefas: dto.subtarefas?.map((sub) => ({
           nomeTarefa: sub.nomeTarefa,
           imgTarefa: sub.imgTarefa,
@@ -107,6 +109,7 @@ export class RoutinesService {
       nomeTarefa: template.nomeTarefa,
       duracaoMinutos: template.duracaoMinutos ?? undefined,
       imgTarefa: template.imgTarefa ?? undefined,
+      horarioInicio: template.horarioInicio,
       dataTarefa: today.toISOString(),
       subtarefas: template.subtarefas.map((sub) => ({
         nomeTarefa: sub.nomeTarefa,

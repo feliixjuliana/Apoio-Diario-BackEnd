@@ -12,6 +12,10 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  HORARIO_INICIO_MESSAGE,
+  HORARIO_INICIO_PATTERN,
+} from '../../common/validation/horario-inicio.validation';
 
 class CreateSubtaskNestedDto {
   @IsString()
@@ -43,8 +47,8 @@ export class CreateRoutineDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
-    message: 'horarioInicio deve estar no formato HH:mm.',
+  @Matches(HORARIO_INICIO_PATTERN, {
+    message: HORARIO_INICIO_MESSAGE,
   })
   horarioInicio?: string | null;
 
