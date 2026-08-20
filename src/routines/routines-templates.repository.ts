@@ -50,19 +50,21 @@ export class RoutineTemplatesRepository {
         data,
       });
 
-      await tx.template_subtask.deleteMany({
-        where: { templateId: id },
-      });
-
-      if (subtarefas?.length) {
-        await tx.template_subtask.createMany({
-          data: subtarefas.map((s, index) => ({
-            templateId: id,
-            nomeTarefa: s.nomeTarefa,
-            imgTarefa: s.imgTarefa,
-            ordem: index,
-          })),
+      if (subtarefas !== undefined) {
+        await tx.template_subtask.deleteMany({
+          where: { templateId: id },
         });
+
+        if (subtarefas.length) {
+          await tx.template_subtask.createMany({
+            data: subtarefas.map((s, index) => ({
+              templateId: id,
+              nomeTarefa: s.nomeTarefa,
+              imgTarefa: s.imgTarefa,
+              ordem: index,
+            })),
+          });
+        }
       }
 
       return tx.routine_template.findUnique({

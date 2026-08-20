@@ -5,9 +5,14 @@ import {
   IsUrl,
   IsOptional,
   IsArray,
+  Matches,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  HORARIO_INICIO_MESSAGE,
+  HORARIO_INICIO_PATTERN,
+} from '../../common/validation/horario-inicio.validation';
 
 export class CreateTemplateSubtaskDto {
   @IsString()
@@ -32,6 +37,13 @@ export class CreateRoutineTemplateDto {
   @IsOptional()
   @IsUrl()
   imgTarefa?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(HORARIO_INICIO_PATTERN, {
+    message: HORARIO_INICIO_MESSAGE,
+  })
+  horarioInicio?: string | null;
 
   @IsArray()
   @ValidateNested({ each: true })
