@@ -47,6 +47,7 @@ model routine {
   duracaoMinutos   Float?    @map("duracao_minutos")
   imgTarefa        String?   @map("img_tarefa")
   dataTarefa       DateTime? @map("data_tarefa")
+  horarioInicio    String?   @map("horario_inicio") @db.VarChar(5)
   usaSubtarefas    Boolean   @default(false) @map("usa_subtarefas")
   prioridade       Int       @default(1)
   tarefaCompletada Boolean   @default(false) @map("tarefa_completada")

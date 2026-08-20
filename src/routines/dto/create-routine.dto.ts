@@ -8,6 +8,7 @@ import {
   IsDateString,
   ValidateNested,
   IsNotEmpty,
+  Matches,
   ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -39,6 +40,13 @@ export class CreateRoutineDto {
   @IsOptional()
   @IsUrl()
   imgTarefa?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'horarioInicio deve estar no formato HH:mm.',
+  })
+  horarioInicio?: string | null;
 
   @ValidateIf((o) => !o.salvarComoTemplate)
   @IsNotEmpty()
