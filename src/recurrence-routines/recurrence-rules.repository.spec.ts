@@ -16,6 +16,8 @@ describe('RecurrenceRulesRepository schedule persistence', () => {
     },
     routine: {
       updateMany: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
     },
   };
   const prisma = {
@@ -31,6 +33,7 @@ describe('RecurrenceRulesRepository schedule persistence', () => {
     transaction.routine_recurrence_rule.findUnique.mockResolvedValue({
       id: 'rule-id',
     });
+    transaction.routine.findMany.mockResolvedValue([]);
   });
 
   it('persists dataInicio as a civil date and horarioInicio as text', async () => {
@@ -171,5 +174,35 @@ describe('RecurrenceRulesRepository schedule persistence', () => {
 
     const call = transaction.routine_recurrence_rule.update.mock.calls[0][0];
     expect(call.data).not.toHaveProperty('dataInicio');
+  });
+
+  it('reconciles priorities on every day affected by a recurrence time change', async () => {
+    transaction.routine.findMany
+      .mockResolvedValueOnce([
+        {
+          childId: 'child-id',
+          dataTarefa: new Date('2026-08-22T00:00:00.000Z'),
+        },
+      ])
+      .mockResolvedValueOnce([
+        { id: '15h', prioridade: 1, horarioInicio: '15:00' },
+        { id: 'livre', prioridade: 2, horarioInicio: null },
+        { id: '10h', prioridade: 3, horarioInicio: '10:00' },
+      ]);
+
+    await repository.updateRuleTransaction(
+      'rule-id',
+      { horarioInicio: '10:00' },
+      new Date('2026-08-21T15:30:00.000Z'),
+    );
+
+    expect(transaction.routine.update).toHaveBeenCalledWith({
+      where: { id: '10h' },
+      data: { prioridade: 1 },
+    });
+    expect(transaction.routine.update).toHaveBeenCalledWith({
+      where: { id: '15h' },
+      data: { prioridade: 3 },
+    });
   });
 });
