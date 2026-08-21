@@ -2,17 +2,19 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateRecurrenceRuleDto } from '../recurrence-routines/dto/create-recurrence-rule.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { UpdateRecurrenceRuleDto } from './dto/update-recurrence-rule.dto';
+import { parseDataCivil } from '../common/date/data-civil';
 
 @Injectable()
 export class RecurrenceRulesRepository {
   constructor(private prisma: PrismaService) {}
 
   create(dto: CreateRecurrenceRuleDto) {
-    const { subtarefas, ...data } = dto;
+    const { subtarefas, dataInicio, ...data } = dto;
 
     return this.prisma.routine_recurrence_rule.create({
       data: {
         ...data,
+        dataInicio: parseDataCivil(dataInicio),
         subtarefas: {
           create: subtarefas?.map((s, index) => ({
             nomeTarefa: s.nomeTarefa,
@@ -41,29 +43,33 @@ export class RecurrenceRulesRepository {
   }
 
   async updateRuleTransaction(id: string, dto: UpdateRecurrenceRuleDto) {
-    const { subtarefas, ...data } = dto;
+    const { subtarefas, dataInicio, ...data } = dto;
 
     return this.prisma.$transaction(async (tx) => {
       await tx.routine_recurrence_rule.update({
         where: { id },
         data: {
           ...data,
+          dataInicio:
+            dataInicio === undefined ? undefined : parseDataCivil(dataInicio),
         },
       });
 
-      await tx.recurrence_subtask.deleteMany({
-        where: { ruleId: id },
-      });
-
-      if (subtarefas?.length) {
-        await tx.recurrence_subtask.createMany({
-          data: subtarefas.map((s, index) => ({
-            ruleId: id,
-            nomeTarefa: s.nomeTarefa,
-            imgTarefa: s.imgTarefa,
-            ordem: index,
-          })),
+      if (subtarefas !== undefined) {
+        await tx.recurrence_subtask.deleteMany({
+          where: { ruleId: id },
         });
+
+        if (subtarefas.length) {
+          await tx.recurrence_subtask.createMany({
+            data: subtarefas.map((s, index) => ({
+              ruleId: id,
+              nomeTarefa: s.nomeTarefa,
+              imgTarefa: s.imgTarefa,
+              ordem: index,
+            })),
+          });
+        }
       }
 
       return tx.routine_recurrence_rule.findUnique({
