@@ -3,6 +3,7 @@ import { CreateRecurrenceRuleDto } from '../recurrence-routines/dto/create-recur
 import { PrismaService } from 'prisma/prisma.service';
 import { UpdateRecurrenceRuleDto } from './dto/update-recurrence-rule.dto';
 import { parseDataCivil } from '../common/date/data-civil';
+import { obterMomentoNegocio } from '../common/date/relogio-negocio';
 
 @Injectable()
 export class RecurrenceRulesRepository {
@@ -42,18 +43,51 @@ export class RecurrenceRulesRepository {
     });
   }
 
-  async updateRuleTransaction(id: string, dto: UpdateRecurrenceRuleDto) {
+  async updateRuleTransaction(
+    id: string,
+    dto: UpdateRecurrenceRuleDto,
+    agora = new Date(),
+  ) {
     const { subtarefas, dataInicio, ...data } = dto;
+    const dadosRegra =
+      dataInicio === undefined
+        ? data
+        : { ...data, dataInicio: parseDataCivil(dataInicio) };
 
     return this.prisma.$transaction(async (tx) => {
       await tx.routine_recurrence_rule.update({
         where: { id },
-        data: {
-          ...data,
-          dataInicio:
-            dataInicio === undefined ? undefined : parseDataCivil(dataInicio),
-        },
+        data: dadosRegra,
       });
+
+      if (dto.horarioInicio !== undefined) {
+        const { inicioHoje, inicioAmanha, horarioAtual } =
+          obterMomentoNegocio(agora);
+        const hojeSemHorarioPodeReceberNovoHorario =
+          dto.horarioInicio !== null && dto.horarioInicio >= horarioAtual;
+
+        await tx.routine.updateMany({
+          where: {
+            recurrenceRuleId: id,
+            tarefaCompletada: false,
+            OR: [
+              {
+                dataTarefa: { gte: inicioAmanha },
+              },
+              {
+                dataTarefa: { gte: inicioHoje, lt: inicioAmanha },
+                OR: [
+                  { horarioInicio: { gte: horarioAtual } },
+                  ...(hojeSemHorarioPodeReceberNovoHorario
+                    ? [{ horarioInicio: null }]
+                    : []),
+                ],
+              },
+            ],
+          },
+          data: { horarioInicio: dto.horarioInicio },
+        });
+      }
 
       if (subtarefas !== undefined) {
         await tx.recurrence_subtask.deleteMany({
