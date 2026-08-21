@@ -4,6 +4,10 @@ import { PrismaService } from 'prisma/prisma.service';
 import { UpdateRecurrenceRuleDto } from './dto/update-recurrence-rule.dto';
 import { parseDataCivil } from '../common/date/data-civil';
 import { obterMomentoNegocio } from '../common/date/relogio-negocio';
+import {
+  chaveDataTarefa,
+  reconciliarPrioridadesDoDia,
+} from '../routines/prioridade-routines';
 
 @Injectable()
 export class RecurrenceRulesRepository {
@@ -65,28 +69,50 @@ export class RecurrenceRulesRepository {
           obterMomentoNegocio(agora);
         const hojeSemHorarioPodeReceberNovoHorario =
           dto.horarioInicio !== null && dto.horarioInicio >= horarioAtual;
+        const filtroOcorrencias = {
+          recurrenceRuleId: id,
+          tarefaCompletada: false,
+          OR: [
+            {
+              dataTarefa: { gte: inicioAmanha },
+            },
+            {
+              dataTarefa: { gte: inicioHoje, lt: inicioAmanha },
+              OR: [
+                { horarioInicio: { gte: horarioAtual } },
+                ...(hojeSemHorarioPodeReceberNovoHorario
+                  ? [{ horarioInicio: null }]
+                  : []),
+              ],
+            },
+          ],
+        };
+        const ocorrenciasAfetadas = await tx.routine.findMany({
+          where: filtroOcorrencias,
+          select: { childId: true, dataTarefa: true },
+        });
 
         await tx.routine.updateMany({
-          where: {
-            recurrenceRuleId: id,
-            tarefaCompletada: false,
-            OR: [
-              {
-                dataTarefa: { gte: inicioAmanha },
-              },
-              {
-                dataTarefa: { gte: inicioHoje, lt: inicioAmanha },
-                OR: [
-                  { horarioInicio: { gte: horarioAtual } },
-                  ...(hojeSemHorarioPodeReceberNovoHorario
-                    ? [{ horarioInicio: null }]
-                    : []),
-                ],
-              },
-            ],
-          },
+          where: filtroOcorrencias,
           data: { horarioInicio: dto.horarioInicio },
         });
+
+        const diasAfetados = new Map<
+          string,
+          { childId: string; dataTarefa: Date }
+        >();
+        for (const ocorrencia of ocorrenciasAfetadas) {
+          if (ocorrencia.dataTarefa) {
+            const chave = `${ocorrencia.childId}:${chaveDataTarefa(ocorrencia.dataTarefa)}`;
+            diasAfetados.set(chave, {
+              childId: ocorrencia.childId,
+              dataTarefa: ocorrencia.dataTarefa,
+            });
+          }
+        }
+        for (const dia of diasAfetados.values()) {
+          await reconciliarPrioridadesDoDia(tx, dia.childId, dia.dataTarefa);
+        }
       }
 
       if (subtarefas !== undefined) {

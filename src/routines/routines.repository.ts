@@ -3,6 +3,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { routine } from '@prisma/client';
+import {
+  chaveDataTarefa,
+  reconciliarPrioridadesDoDia,
+} from './prioridade-routines';
 
 @Injectable()
 export class RoutinesRepository {
@@ -15,34 +19,44 @@ export class RoutinesRepository {
 
     const start = new Date(year, month - 1, day, 0, 0, 0, 0);
     const end = new Date(year, month - 1, day, 23, 59, 59, 999);
+    const dataTarefa = new Date(year, month - 1, day);
 
-    const lastRoutine = await this.prisma.routine.findFirst({
-      where: {
-        childId: dto.childId,
-        dataTarefa: {
-          gte: start,
-          lte: end,
+    return this.prisma.$transaction(async (tx) => {
+      const lastRoutine = await tx.routine.findFirst({
+        where: {
+          childId: dto.childId,
+          dataTarefa: {
+            gte: start,
+            lte: end,
+          },
         },
-      },
-      orderBy: { prioridade: 'desc' },
-    });
-
-    const nextPriority = lastRoutine ? lastRoutine.prioridade + 1 : 1;
-
-    return this.prisma.routine.create({
-      data: {
-        ...data,
-        prioridade: nextPriority,
-        dataTarefa: new Date(year, month - 1, day),
-        subtarefas: {
-          create: subtarefas?.map((sub, index) => ({
-            nomeTarefa: sub.nomeTarefa,
-            imgTarefa: sub.imgTarefa,
-            ordem: index,
-          })),
+        orderBy: { prioridade: 'desc' },
+      });
+      const nextPriority = lastRoutine ? lastRoutine.prioridade + 1 : 1;
+      const created = await tx.routine.create({
+        data: {
+          ...data,
+          prioridade: nextPriority,
+          dataTarefa,
+          subtarefas: {
+            create: subtarefas?.map((sub, index) => ({
+              nomeTarefa: sub.nomeTarefa,
+              imgTarefa: sub.imgTarefa,
+              ordem: index,
+            })),
+          },
         },
-      },
-      include: { subtarefas: { orderBy: { ordem: 'asc' } } },
+        include: { subtarefas: { orderBy: { ordem: 'asc' } } },
+      });
+
+      await reconciliarPrioridadesDoDia(tx, dto.childId, dataTarefa);
+
+      return (
+        (await tx.routine.findUnique({
+          where: { id: created.id },
+          include: { subtarefas: { orderBy: { ordem: 'asc' } } },
+        })) ?? created
+      );
     });
   }
 
@@ -64,6 +78,13 @@ export class RoutinesRepository {
         subtarefas: { orderBy: { ordem: 'asc' } },
         crianca: true,
       },
+    });
+  }
+
+  async findManyByIds(ids: string[]) {
+    return this.prisma.routine.findMany({
+      where: { id: { in: ids } },
+      include: { crianca: true },
     });
   }
 
@@ -103,21 +124,49 @@ export class RoutinesRepository {
   async update(id: string, dto: UpdateRoutineDto): Promise<routine> {
     const { subtarefas, ...data } = dto;
 
-    return this.prisma.routine.update({
-      where: { id },
-      data: {
-        ...data,
-        dataTarefa: dto.dataTarefa
-          ? (() => {
-              const onlyDate = dto.dataTarefa.split('T')[0];
-              const [year, month, day] = onlyDate.split('-').map(Number);
-              return new Date(year, month - 1, day);
-            })()
-          : undefined,
-      },
-      include: {
-        subtarefas: { orderBy: { ordem: 'asc' } },
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const atual = await tx.routine.findUnique({
+        where: { id },
+        select: { childId: true, dataTarefa: true },
+      });
+      const updated = await tx.routine.update({
+        where: { id },
+        data: {
+          ...data,
+          dataTarefa: dto.dataTarefa
+            ? (() => {
+                const onlyDate = dto.dataTarefa.split('T')[0];
+                const [year, month, day] = onlyDate.split('-').map(Number);
+                return new Date(year, month - 1, day);
+              })()
+            : undefined,
+        },
+        include: {
+          subtarefas: { orderBy: { ordem: 'asc' } },
+        },
+      });
+      const datasAfetadas = new Map<string, Date>();
+
+      if (atual?.dataTarefa) {
+        datasAfetadas.set(chaveDataTarefa(atual.dataTarefa), atual.dataTarefa);
+      }
+      if (updated.dataTarefa) {
+        datasAfetadas.set(
+          chaveDataTarefa(updated.dataTarefa),
+          updated.dataTarefa,
+        );
+      }
+
+      for (const dataAfetada of datasAfetadas.values()) {
+        await reconciliarPrioridadesDoDia(tx, updated.childId, dataAfetada);
+      }
+
+      return (
+        (await tx.routine.findUnique({
+          where: { id },
+          include: { subtarefas: { orderBy: { ordem: 'asc' } } },
+        })) ?? updated
+      );
     });
   }
 
@@ -160,6 +209,18 @@ export class RoutinesRepository {
   }
 
   async delete(id: string): Promise<routine> {
-    return this.prisma.routine.delete({ where: { id } });
+    return this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.routine.delete({ where: { id } });
+
+      if (deleted.dataTarefa) {
+        await reconciliarPrioridadesDoDia(
+          tx,
+          deleted.childId,
+          deleted.dataTarefa,
+        );
+      }
+
+      return deleted;
+    });
   }
 }

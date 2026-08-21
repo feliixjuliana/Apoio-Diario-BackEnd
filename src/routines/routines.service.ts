@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   ForbiddenException,
@@ -10,6 +11,10 @@ import { ReorderRoutinesDto } from './dto/reorder-routines.dto';
 import { RoutineTemplatesRepository } from './routines-templates.repository';
 import { PrismaService } from 'prisma/prisma.service';
 import { parseDataCivil } from '../common/date/data-civil';
+import {
+  chaveDataTarefa,
+  reconciliarPrioridadesDoDia,
+} from './prioridade-routines';
 
 @Injectable()
 export class RoutinesService {
@@ -59,11 +64,82 @@ export class RoutinesService {
   }
 
   async reorder(userId: string, dto: ReorderRoutinesDto) {
-    const firstItem = await this.repository.findById(dto.items[0].id);
-    if (!firstItem || firstItem.crianca.usuarioId !== userId) {
-      throw new ForbiddenException();
+    const items = [...dto.items].sort((a, b) => a.prioridade - b.prioridade);
+    const ids = items.map((item) => item.id);
+    const prioridades = items.map((item) => item.prioridade);
+
+    if (
+      !items.length ||
+      new Set(ids).size !== ids.length ||
+      new Set(prioridades).size !== prioridades.length ||
+      prioridades.some((prioridade, index) => prioridade !== index + 1)
+    ) {
+      throw new BadRequestException(
+        'A reordenação deve conter uma sequência completa de prioridades.',
+      );
     }
-    return this.repository.reorder(dto.items);
+
+    const rotinas = await this.repository.findManyByIds(ids);
+    if (
+      rotinas.length !== ids.length ||
+      rotinas.some((rotina) => rotina.crianca.usuarioId !== userId)
+    ) {
+      throw new ForbiddenException('Acesso negado a uma ou mais atividades.');
+    }
+
+    const childId = rotinas[0].childId;
+    const dataTarefa = rotinas[0].dataTarefa;
+    if (
+      !dataTarefa ||
+      rotinas.some(
+        (rotina) =>
+          rotina.childId !== childId ||
+          !rotina.dataTarefa ||
+          chaveDataTarefa(rotina.dataTarefa) !== chaveDataTarefa(dataTarefa),
+      )
+    ) {
+      throw new BadRequestException(
+        'Todas as atividades devem pertencer à mesma criança e data.',
+      );
+    }
+
+    const rotinasDoDia = await this.repository.findByChildAndDate(
+      childId,
+      chaveDataTarefa(dataTarefa),
+    );
+    const idsDoDia = new Set(rotinasDoDia.map((rotina) => rotina.id));
+    if (idsDoDia.size !== ids.length || ids.some((id) => !idsDoDia.has(id))) {
+      throw new BadRequestException(
+        'A reordenação deve incluir todas as atividades da data.',
+      );
+    }
+
+    const porId = new Map(rotinas.map((rotina) => [rotina.id, rotina]));
+    const ordemCronologicaAnterior = [...rotinas]
+      .filter((rotina) => rotina.horarioInicio !== null)
+      .sort(
+        (a, b) =>
+          a.horarioInicio!.localeCompare(b.horarioInicio!) ||
+          a.prioridade - b.prioridade ||
+          a.id.localeCompare(b.id),
+      )
+      .map((rotina) => rotina.id);
+    const ordemComHorarioSolicitada = items
+      .map((item) => porId.get(item.id)!)
+      .filter((rotina) => rotina.horarioInicio !== null)
+      .map((rotina) => rotina.id);
+
+    if (
+      ordemCronologicaAnterior.some(
+        (id, index) => id !== ordemComHorarioSolicitada[index],
+      )
+    ) {
+      throw new BadRequestException(
+        'Atividades com horário devem manter a ordem cronológica.',
+      );
+    }
+
+    return this.repository.reorder(items);
   }
 
   async findAllByChild(childId: string, userId: string) {
@@ -210,9 +286,9 @@ export class RoutinesService {
 
     if (!toCreate.length) return;
 
-    await this.prisma.$transaction(
-      toCreate.map((rule) =>
-        this.prisma.routine.create({
+    await this.prisma.$transaction(async (tx) => {
+      for (const rule of toCreate) {
+        await tx.routine.create({
           data: {
             childId: rule.childId,
             nomeTarefa: rule.nomeTarefa,
@@ -231,9 +307,11 @@ export class RoutinesService {
               })),
             },
           },
-        }),
-      ),
-    );
+        });
+      }
+
+      await reconciliarPrioridadesDoDia(tx, childId, targetStart);
+    });
   }
 
   async findAllByChildAndDate(

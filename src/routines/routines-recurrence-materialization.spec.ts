@@ -9,11 +9,12 @@ describe('RoutinesService recurrence schedule materialization', () => {
   const routineModel = {
     findMany: jest.fn(),
     create: jest.fn(),
+    update: jest.fn(),
   };
   const prisma = {
     routine_recurrence_rule: recurrenceRuleModel,
     routine: routineModel,
-    $transaction: jest.fn((operations) => Promise.all(operations)),
+    $transaction: jest.fn((callback) => callback({ routine: routineModel })),
   };
   const routinesRepository = { findChildById: jest.fn() };
   const service = new RoutinesService(
@@ -97,5 +98,27 @@ describe('RoutinesService recurrence schedule materialization', () => {
     await service.ensureRecurrencesForDate('user-id', 'child-id', '2026-08-21');
 
     expect(routineModel.create).toHaveBeenCalled();
+  });
+
+  it('reconciles priorities after materializing recurring activities', async () => {
+    recurrenceRuleModel.findMany.mockResolvedValue([
+      recurrenceRule({ id: '15h', horarioInicio: '15:00' }),
+      recurrenceRule({ id: '10h', horarioInicio: '10:00' }),
+    ]);
+    routineModel.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      { id: '15h', prioridade: 1, horarioInicio: '15:00' },
+      { id: '10h', prioridade: 2, horarioInicio: '10:00' },
+    ]);
+
+    await service.ensureRecurrencesForDate('user-id', 'child-id', '2026-08-21');
+
+    expect(routineModel.update).toHaveBeenCalledWith({
+      where: { id: '10h' },
+      data: { prioridade: 1 },
+    });
+    expect(routineModel.update).toHaveBeenCalledWith({
+      where: { id: '15h' },
+      data: { prioridade: 2 },
+    });
   });
 });
