@@ -14,6 +14,9 @@ describe('RecurrenceRulesRepository schedule persistence', () => {
       deleteMany: jest.fn(),
       createMany: jest.fn(),
     },
+    routine: {
+      updateMany: jest.fn(),
+    },
   };
   const prisma = {
     routine_recurrence_rule: recurrenceRuleModel,
@@ -54,17 +57,119 @@ describe('RecurrenceRulesRepository schedule persistence', () => {
   it('updates the schedule without replacing omitted subtasks', async () => {
     await repository.updateRuleTransaction('rule-id', {
       dataInicio: '2026-09-01',
-      horarioInicio: null,
     });
 
     expect(transaction.routine_recurrence_rule.update).toHaveBeenCalledWith({
       where: { id: 'rule-id' },
       data: {
         dataInicio: new Date(Date.UTC(2026, 8, 1)),
-        horarioInicio: null,
       },
     });
+    expect(transaction.routine.updateMany).not.toHaveBeenCalled();
     expect(transaction.recurrence_subtask.deleteMany).not.toHaveBeenCalled();
     expect(transaction.recurrence_subtask.createMany).not.toHaveBeenCalled();
+  });
+
+  it('propagates a changed time to pending future occurrences and eligible occurrences today', async () => {
+    await repository.updateRuleTransaction(
+      'rule-id',
+      { horarioInicio: '16:00' },
+      new Date('2026-08-21T15:30:00.000Z'),
+    );
+
+    expect(transaction.routine.updateMany).toHaveBeenCalledWith({
+      where: {
+        recurrenceRuleId: 'rule-id',
+        tarefaCompletada: false,
+        OR: [
+          {
+            dataTarefa: { gte: new Date('2026-08-22T00:00:00.000Z') },
+          },
+          {
+            dataTarefa: {
+              gte: new Date('2026-08-21T00:00:00.000Z'),
+              lt: new Date('2026-08-22T00:00:00.000Z'),
+            },
+            OR: [{ horarioInicio: { gte: '12:30' } }, { horarioInicio: null }],
+          },
+        ],
+      },
+      data: { horarioInicio: '16:00' },
+    });
+  });
+
+  it('does not add an occurrence without a time today when the new time has passed', async () => {
+    await repository.updateRuleTransaction(
+      'rule-id',
+      { horarioInicio: '11:00' },
+      new Date('2026-08-21T15:30:00.000Z'),
+    );
+
+    const call = transaction.routine.updateMany.mock.calls[0][0];
+    expect(call.where.OR[1].OR).toEqual([{ horarioInicio: { gte: '12:30' } }]);
+  });
+
+  it('leaves completed occurrences unchanged', async () => {
+    await repository.updateRuleTransaction(
+      'rule-id',
+      { horarioInicio: '16:00' },
+      new Date('2026-08-21T15:30:00.000Z'),
+    );
+
+    const call = transaction.routine.updateMany.mock.calls[0][0];
+    expect(call.where.tarefaCompletada).toBe(false);
+  });
+
+  it('leaves historical and already-passed occurrences today unchanged', async () => {
+    await repository.updateRuleTransaction(
+      'rule-id',
+      { horarioInicio: '16:00' },
+      new Date('2026-08-21T15:30:00.000Z'),
+    );
+
+    const call = transaction.routine.updateMany.mock.calls[0][0];
+    expect(call.where.OR).toEqual(
+      expect.arrayContaining([
+        {
+          dataTarefa: { gte: new Date('2026-08-22T00:00:00.000Z') },
+        },
+        expect.objectContaining({
+          dataTarefa: {
+            gte: new Date('2026-08-21T00:00:00.000Z'),
+            lt: new Date('2026-08-22T00:00:00.000Z'),
+          },
+          OR: expect.arrayContaining([{ horarioInicio: { gte: '12:30' } }]),
+        }),
+      ]),
+    );
+  });
+
+  it('removes the time only from eligible pending occurrences', async () => {
+    await repository.updateRuleTransaction(
+      'rule-id',
+      { horarioInicio: null },
+      new Date('2026-08-21T15:30:00.000Z'),
+    );
+
+    expect(transaction.routine.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          recurrenceRuleId: 'rule-id',
+          tarefaCompletada: false,
+        }),
+        data: { horarioInicio: null },
+      }),
+    );
+    const call = transaction.routine.updateMany.mock.calls[0][0];
+    expect(call.where.OR[1].OR).toEqual([{ horarioInicio: { gte: '12:30' } }]);
+  });
+
+  it('does not change dataInicio when only horarioInicio is edited', async () => {
+    await repository.updateRuleTransaction('rule-id', {
+      horarioInicio: '18:00',
+    });
+
+    const call = transaction.routine_recurrence_rule.update.mock.calls[0][0];
+    expect(call.data).not.toHaveProperty('dataInicio');
   });
 });
