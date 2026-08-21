@@ -109,9 +109,11 @@ model routine_recurrence_rule {
   id      String @id @default(uuid())
   childId String @map("child_id")
 
-  nomeTarefa     String  @map("nome_tarefa")
-  duracaoMinutos Float?  @map("duracao_minutos")
-  imgTarefa      String? @map("img_tarefa")
+  nomeTarefa     String    @map("nome_tarefa")
+  duracaoMinutos Float?    @map("duracao_minutos")
+  imgTarefa      String?   @map("img_tarefa")
+  horarioInicio  String?   @map("horario_inicio") @db.VarChar(5)
+  dataInicio     DateTime? @map("data_inicio") @db.Date
 
   diasSemana Int[]   @map("dias_semana")
   ativo      Boolean @default(true)

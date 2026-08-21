@@ -1,6 +1,5 @@
 import {
   IsString,
-  IsBoolean,
   IsUrl,
   IsOptional,
   IsArray,
@@ -9,9 +8,19 @@ import {
   IsInt,
   Min,
   Max,
+  IsDateString,
+  Matches,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  HORARIO_INICIO_MESSAGE,
+  HORARIO_INICIO_PATTERN,
+} from '../../common/validation/horario-inicio.validation';
+import {
+  DATA_CIVIL_MESSAGE,
+  DATA_CIVIL_PATTERN,
+} from '../../common/date/data-civil';
 
 class CreateRecurrenceSubtaskDto {
   @IsString()
@@ -38,9 +47,20 @@ export class CreateRecurrenceRuleDto {
   @Min(0)
   duracaoMinutos?: number;
 
-  @IsBoolean()
   @IsOptional()
-  favorita?: boolean;
+  @IsString()
+  @Matches(HORARIO_INICIO_PATTERN, {
+    message: HORARIO_INICIO_MESSAGE,
+  })
+  horarioInicio?: string | null;
+
+  @IsString()
+  @Matches(DATA_CIVIL_PATTERN, { message: DATA_CIVIL_MESSAGE })
+  @IsDateString(
+    { strict: true, strictSeparator: true },
+    { message: DATA_CIVIL_MESSAGE },
+  )
+  dataInicio: string;
 
   @IsArray()
   @ArrayNotEmpty()

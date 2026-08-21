@@ -9,6 +9,7 @@ import { UpdateRoutineDto } from './dto/update-routine.dto';
 import { ReorderRoutinesDto } from './dto/reorder-routines.dto';
 import { RoutineTemplatesRepository } from './routines-templates.repository';
 import { PrismaService } from 'prisma/prisma.service';
+import { parseDataCivil } from '../common/date/data-civil';
 
 @Injectable()
 export class RoutinesService {
@@ -162,6 +163,7 @@ export class RoutinesService {
     const [year, month, day] = onlyDate.split('-').map(Number);
 
     const target = new Date(year, month - 1, day);
+    const targetCivilDate = parseDataCivil(onlyDate);
 
     const targetStart = this.startOfDay(target);
 
@@ -177,11 +179,16 @@ export class RoutinesService {
         childId,
         ativo: true,
         diasSemana: { has: weekday },
+        OR: [{ dataInicio: null }, { dataInicio: { lte: targetCivilDate } }],
       },
       include: { subtarefas: { orderBy: { ordem: 'asc' } } },
     });
 
-    if (!rules.length) return;
+    const eligibleRules = rules.filter(
+      (rule) => rule.dataInicio === null || rule.dataInicio <= targetCivilDate,
+    );
+
+    if (!eligibleRules.length) return;
 
     const existing = await this.prisma.routine.findMany({
       where: {
@@ -197,7 +204,9 @@ export class RoutinesService {
     let nextPriority =
       existing.reduce((max, r) => Math.max(max, r.prioridade), 0) + 1;
 
-    const toCreate = rules.filter((rule) => !existingRuleIds.has(rule.id));
+    const toCreate = eligibleRules.filter(
+      (rule) => !existingRuleIds.has(rule.id),
+    );
 
     if (!toCreate.length) return;
 
@@ -209,6 +218,7 @@ export class RoutinesService {
             nomeTarefa: rule.nomeTarefa,
             duracaoMinutos: rule.duracaoMinutos ?? undefined,
             imgTarefa: rule.imgTarefa,
+            horarioInicio: rule.horarioInicio,
             dataTarefa: targetStart,
             prioridade: nextPriority++,
             tarefaCompletada: false,
