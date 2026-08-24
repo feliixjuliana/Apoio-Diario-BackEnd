@@ -34,6 +34,13 @@ export class RoutineTemplatesRepository {
     });
   }
 
+  async findChildById(id: string) {
+    return this.prisma.children.findUnique({
+      where: { id },
+      select: { id: true, usuarioId: true },
+    });
+  }
+
   async findById(id: string) {
     return this.prisma.routine_template.findUnique({
       where: { id },

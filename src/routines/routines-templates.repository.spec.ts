@@ -6,6 +6,9 @@ describe('RoutineTemplatesRepository horarioInicio', () => {
     create: jest.fn(),
     findMany: jest.fn(),
   };
+  const childrenModel = {
+    findUnique: jest.fn(),
+  };
   const transaction = {
     routine_template: {
       update: jest.fn(),
@@ -18,6 +21,7 @@ describe('RoutineTemplatesRepository horarioInicio', () => {
   };
   const prisma = {
     routine_template: routineTemplateModel,
+    children: childrenModel,
     $transaction: jest.fn((callback) => callback(transaction)),
   };
   const repository = new RoutineTemplatesRepository(
@@ -94,5 +98,19 @@ describe('RoutineTemplatesRepository horarioInicio', () => {
     const result = await repository.findByChild('child-id');
 
     expect(result).toEqual(templates);
+  });
+
+  it('loads only the child identity and owner needed for authorization', async () => {
+    childrenModel.findUnique.mockResolvedValue({
+      id: 'child-id',
+      usuarioId: 'user-id',
+    });
+
+    await repository.findChildById('child-id');
+
+    expect(childrenModel.findUnique).toHaveBeenCalledWith({
+      where: { id: 'child-id' },
+      select: { id: true, usuarioId: true },
+    });
   });
 });
