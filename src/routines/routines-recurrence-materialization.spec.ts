@@ -100,7 +100,7 @@ describe('RoutinesService recurrence schedule materialization', () => {
     expect(routineModel.create).toHaveBeenCalled();
   });
 
-  it('reconciles priorities after materializing recurring activities', async () => {
+  it('preserves materialization priority regardless of activity time', async () => {
     recurrenceRuleModel.findMany.mockResolvedValue([
       recurrenceRule({ id: '15h', horarioInicio: '15:00' }),
       recurrenceRule({ id: '10h', horarioInicio: '10:00' }),
@@ -112,13 +112,8 @@ describe('RoutinesService recurrence schedule materialization', () => {
 
     await service.ensureRecurrencesForDate('user-id', 'child-id', '2026-08-21');
 
-    expect(routineModel.update).toHaveBeenCalledWith({
-      where: { id: '10h' },
-      data: { prioridade: 1 },
-    });
-    expect(routineModel.update).toHaveBeenCalledWith({
-      where: { id: '15h' },
-      data: { prioridade: 2 },
-    });
+    expect(routineModel.create.mock.calls[0][0].data.prioridade).toBe(1);
+    expect(routineModel.create.mock.calls[1][0].data.prioridade).toBe(2);
+    expect(routineModel.update).not.toHaveBeenCalled();
   });
 });

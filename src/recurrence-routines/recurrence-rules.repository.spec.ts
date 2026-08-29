@@ -176,7 +176,7 @@ describe('RecurrenceRulesRepository schedule persistence', () => {
     expect(call.data).not.toHaveProperty('dataInicio');
   });
 
-  it('reconciles priorities on every day affected by a recurrence time change', async () => {
+  it('preserves priorities when a recurrence time changes', async () => {
     transaction.routine.findMany
       .mockResolvedValueOnce([
         {
@@ -196,13 +196,9 @@ describe('RecurrenceRulesRepository schedule persistence', () => {
       new Date('2026-08-21T15:30:00.000Z'),
     );
 
-    expect(transaction.routine.update).toHaveBeenCalledWith({
-      where: { id: '10h' },
-      data: { prioridade: 1 },
-    });
-    expect(transaction.routine.update).toHaveBeenCalledWith({
-      where: { id: '15h' },
-      data: { prioridade: 3 },
-    });
+    expect(transaction.routine.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { horarioInicio: '10:00' } }),
+    );
+    expect(transaction.routine.update).not.toHaveBeenCalled();
   });
 });
