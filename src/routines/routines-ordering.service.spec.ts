@@ -72,7 +72,7 @@ describe('RoutinesService safe reordering', () => {
     expect(repository.reorder).not.toHaveBeenCalled();
   });
 
-  it('preserves the previous priority as the tie-breaker for equal times', async () => {
+  it('preserves the previous relative priority for activities with a time', async () => {
     const rotinas = [
       rotina('primeiro', 1, '10:00'),
       rotina('segundo', 2, '10:00'),
@@ -88,6 +88,25 @@ describe('RoutinesService safe reordering', () => {
         ],
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('accepts an existing priority order that is not chronological', async () => {
+    const rotinas = [
+      rotina('brincar', 1, '12:50'),
+      rotina('estudar', 2, '14:00'),
+      rotina('descansar', 3, '11:00'),
+    ];
+    repository.findManyByIds.mockResolvedValue(rotinas);
+    repository.findByChildAndDate.mockResolvedValue(rotinas);
+    const items = [
+      { id: 'brincar', prioridade: 1 },
+      { id: 'estudar', prioridade: 2 },
+      { id: 'descansar', prioridade: 3 },
+    ];
+
+    await service.reorder('user-id', { items });
+
+    expect(repository.reorder).toHaveBeenCalledWith(items);
   });
 
   it('validates ownership for every received activity', async () => {

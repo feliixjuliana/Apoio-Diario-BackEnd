@@ -115,14 +115,9 @@ export class RoutinesService {
     }
 
     const porId = new Map(rotinas.map((rotina) => [rotina.id, rotina]));
-    const ordemCronologicaAnterior = [...rotinas]
+    const ordemComHorarioAnterior = [...rotinas]
       .filter((rotina) => rotina.horarioInicio !== null)
-      .sort(
-        (a, b) =>
-          a.horarioInicio!.localeCompare(b.horarioInicio!) ||
-          a.prioridade - b.prioridade ||
-          a.id.localeCompare(b.id),
-      )
+      .sort((a, b) => a.prioridade - b.prioridade || a.id.localeCompare(b.id))
       .map((rotina) => rotina.id);
     const ordemComHorarioSolicitada = items
       .map((item) => porId.get(item.id)!)
@@ -130,12 +125,12 @@ export class RoutinesService {
       .map((rotina) => rotina.id);
 
     if (
-      ordemCronologicaAnterior.some(
+      ordemComHorarioAnterior.some(
         (id, index) => id !== ordemComHorarioSolicitada[index],
       )
     ) {
       throw new BadRequestException(
-        'Atividades com horário devem manter a ordem cronológica.',
+        'Atividades com horário devem manter sua ordem relativa.',
       );
     }
 

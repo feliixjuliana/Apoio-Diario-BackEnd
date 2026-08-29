@@ -1,47 +1,43 @@
-import { reconciliarOrdemCronologica } from './prioridade-routines';
+import { normalizarOrdemPorPrioridade } from './prioridade-routines';
 
 describe('routine priority reconciliation', () => {
-  it('places 10:00 before 15:00 while preserving slots without a time', () => {
+  it('preserves priority order regardless of activity time', () => {
     expect(
-      reconciliarOrdemCronologica([
-        { id: '15h', prioridade: 1, horarioInicio: '15:00' },
-        { id: 'livre', prioridade: 2, horarioInicio: null },
-        { id: '10h', prioridade: 3, horarioInicio: '10:00' },
+      normalizarOrdemPorPrioridade([
+        { id: '12h50', prioridade: 1 },
+        { id: '14h', prioridade: 2 },
+        { id: '11h', prioridade: 3 },
       ]),
     ).toEqual([
-      { id: '10h', prioridade: 1 },
-      { id: 'livre', prioridade: 2 },
-      { id: '15h', prioridade: 3 },
+      { id: '12h50', prioridade: 1 },
+      { id: '14h', prioridade: 2 },
+      { id: '11h', prioridade: 3 },
     ]);
   });
 
-  it('uses the previous priority to break equal-time ties', () => {
+  it('normalizes gaps without changing the relative priority order', () => {
     expect(
-      reconciliarOrdemCronologica([
-        { id: 'segundo', prioridade: 2, horarioInicio: '10:00' },
-        { id: 'primeiro', prioridade: 1, horarioInicio: '10:00' },
+      normalizarOrdemPorPrioridade([
+        { id: 'terceiro', prioridade: 8 },
+        { id: 'primeiro', prioridade: 2 },
+        { id: 'segundo', prioridade: 5 },
       ]),
     ).toEqual([
       { id: 'primeiro', prioridade: 1 },
       { id: 'segundo', prioridade: 2 },
+      { id: 'terceiro', prioridade: 3 },
     ]);
   });
 
-  it('allows activities without a time before, between and after timed slots', () => {
+  it('uses the id only as a deterministic tie-breaker', () => {
     expect(
-      reconciliarOrdemCronologica([
-        { id: 'antes', prioridade: 1, horarioInicio: null },
-        { id: '18h', prioridade: 2, horarioInicio: '18:00' },
-        { id: 'entre', prioridade: 3, horarioInicio: null },
-        { id: '08h', prioridade: 4, horarioInicio: '08:00' },
-        { id: 'depois', prioridade: 5, horarioInicio: null },
+      normalizarOrdemPorPrioridade([
+        { id: 'b', prioridade: 1 },
+        { id: 'a', prioridade: 1 },
       ]),
     ).toEqual([
-      { id: 'antes', prioridade: 1 },
-      { id: '08h', prioridade: 2 },
-      { id: 'entre', prioridade: 3 },
-      { id: '18h', prioridade: 4 },
-      { id: 'depois', prioridade: 5 },
+      { id: 'a', prioridade: 1 },
+      { id: 'b', prioridade: 2 },
     ]);
   });
 });

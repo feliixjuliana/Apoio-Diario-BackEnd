@@ -117,7 +117,7 @@ describe('RoutinesRepository horarioInicio', () => {
     expect(result).toEqual(routines);
   });
 
-  it('reconciles timed priorities when creating an activity', async () => {
+  it('keeps creation priority even when the new time is earlier', async () => {
     routineModel.findFirst.mockResolvedValue({ prioridade: 2 });
     routineModel.create.mockResolvedValue({
       id: '10h',
@@ -137,17 +137,15 @@ describe('RoutinesRepository horarioInicio', () => {
       horarioInicio: '10:00',
     });
 
-    expect(routineModel.update).toHaveBeenCalledWith({
-      where: { id: '10h' },
-      data: { prioridade: 1 },
-    });
-    expect(routineModel.update).toHaveBeenCalledWith({
-      where: { id: '15h' },
-      data: { prioridade: 3 },
-    });
+    expect(routineModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ prioridade: 3 }),
+      }),
+    );
+    expect(routineModel.update).not.toHaveBeenCalled();
   });
 
-  it('reconciles priorities when editing or removing horarioInicio', async () => {
+  it('does not change priorities when editing or removing horarioInicio', async () => {
     routineModel.findUnique
       .mockResolvedValueOnce({
         childId: 'child-id',
@@ -167,14 +165,13 @@ describe('RoutinesRepository horarioInicio', () => {
 
     await repository.update('editada', { horarioInicio: null });
 
-    expect(routineModel.update).toHaveBeenCalledWith({
-      where: { id: '10h' },
-      data: { prioridade: 1 },
-    });
-    expect(routineModel.update).toHaveBeenCalledWith({
-      where: { id: '15h' },
-      data: { prioridade: 3 },
-    });
+    expect(routineModel.update).toHaveBeenCalledTimes(1);
+    expect(routineModel.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'editada' },
+        data: expect.objectContaining({ horarioInicio: null }),
+      }),
+    );
   });
 
   it('submits the complete priority update as one transaction', async () => {
