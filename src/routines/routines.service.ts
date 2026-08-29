@@ -116,12 +116,16 @@ export class RoutinesService {
 
     const porId = new Map(rotinas.map((rotina) => [rotina.id, rotina]));
     const ordemComHorarioAnterior = [...rotinas]
-      .filter((rotina) => rotina.horarioInicio !== null)
+      .filter(
+        (rotina) => rotina.horarioInicio !== null && !rotina.tarefaCompletada,
+      )
       .sort((a, b) => a.prioridade - b.prioridade || a.id.localeCompare(b.id))
       .map((rotina) => rotina.id);
     const ordemComHorarioSolicitada = items
       .map((item) => porId.get(item.id)!)
-      .filter((rotina) => rotina.horarioInicio !== null)
+      .filter(
+        (rotina) => rotina.horarioInicio !== null && !rotina.tarefaCompletada,
+      )
       .map((rotina) => rotina.id);
 
     if (

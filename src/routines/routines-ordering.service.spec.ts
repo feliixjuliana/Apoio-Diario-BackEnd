@@ -109,6 +109,27 @@ describe('RoutinesService safe reordering', () => {
     expect(repository.reorder).toHaveBeenCalledWith(items);
   });
 
+  it('allows completed timed activities to be moved after pending activities', async () => {
+    const rotinas = [
+      rotina('concluida', 1, '08:00', { tarefaCompletada: true }),
+      rotina('pendente-10h', 2, '10:00'),
+      rotina('livre', 3, null),
+      rotina('pendente-14h', 4, '14:00'),
+    ];
+    repository.findManyByIds.mockResolvedValue(rotinas);
+    repository.findByChildAndDate.mockResolvedValue(rotinas);
+    const items = [
+      { id: 'pendente-10h', prioridade: 1 },
+      { id: 'livre', prioridade: 2 },
+      { id: 'pendente-14h', prioridade: 3 },
+      { id: 'concluida', prioridade: 4 },
+    ];
+
+    await service.reorder('user-id', { items });
+
+    expect(repository.reorder).toHaveBeenCalledWith(items);
+  });
+
   it('validates ownership for every received activity', async () => {
     repository.findManyByIds.mockResolvedValue([
       rotina('10h', 1, '10:00'),
