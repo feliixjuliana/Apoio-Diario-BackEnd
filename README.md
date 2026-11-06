@@ -131,6 +131,16 @@ A API utiliza o prefixo `/api`. Aqui está o fluxo para testar:
 2. **Logar**: `POST http://localhost:3000/api/auth/login`.
 3. **Copiar Token**: Copie o `token` recebido na resposta do login.
 
+### Exclusão da própria conta
+
+`DELETE /api/users/me` exige um token Bearer e o corpo JSON
+`{"password":"<senha-atual>"}`. Com a senha correta, responde `204` após
+excluir a conta e os registros relacionados no banco. A identidade é obtida do
+token. Após a exclusão, o mesmo token é rejeitado nas rotas protegidas.
+
+Esta operação **não exclui imagens no S3**, backups ou outros dados fora do banco.
+Ela é irreversível; não use contas ou dados reais para validar o fluxo.
+
 ### B. Gerenciar Perfis de Crianças
 
 > **Importante**: Em todas as rotas abaixo, vá na aba **Auth** do Postman, selecione **Bearer Token** e cole o seu token.

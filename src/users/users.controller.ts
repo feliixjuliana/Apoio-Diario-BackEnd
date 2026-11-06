@@ -10,11 +10,13 @@ import {
   Request,
   ParseIntPipe,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 
 @Controller()
 export class UsersController {
@@ -62,6 +64,13 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   async validatePin(@Request() req, @Body('pin', ParseIntPipe) pin: number) {
     return this.usersService.validatePin(req.user.id, pin);
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete('users/me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteCurrentUser(@Request() req, @Body() body: DeleteAccountDto) {
+    await this.usersService.deleteCurrentUser(req.user.id, body.password);
   }
 
   @UseGuards(AuthGuard)

@@ -60,4 +60,11 @@ export class UsersRepository {
       where: { id },
     });
   }
+
+  async deleteIfPasswordUnchanged(id: string, passwordHash: string): Promise<boolean> {
+    const result = await this.prisma.users.deleteMany({
+      where: { id, senha: passwordHash },
+    });
+    return result.count === 1;
+  }
 }

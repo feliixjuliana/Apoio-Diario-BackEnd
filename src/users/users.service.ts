@@ -164,6 +164,21 @@ export class UsersService {
     return { valid: true };
   }
 
+  async deleteCurrentUser(userId: string, password: string): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user?.senha || !(await bcrypt.compare(password, user.senha))) {
+      throw new ForbiddenException('Não foi possível confirmar a senha.');
+    }
+
+    const deleted = await this.userRepository.deleteIfPasswordUnchanged(
+      userId,
+      user.senha,
+    );
+    if (!deleted) {
+      throw new ForbiddenException('Não foi possível concluir a exclusão.');
+    }
+  }
+
   async updateParentalControl(userId: string, enabled: boolean) {
     const user = await this.userRepository.findById(userId);
 
